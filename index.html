@@ -205,7 +205,7 @@
   .card-wide{flex-shrink:0; width:200px;}
   .card-icon{
     width:48px; height:48px; border-radius:16px; display:flex; align-items:center; justify-content:center;
-    margin-bottom:12px; font-size:22px; position:relative;
+    margin-bottom:12px; font-size:22px; position:relative; flex-shrink:0;
   }
   .card-icon.cat-clear{background:rgba(110,155,111,0.16); color:var(--matcha);}
   .card-icon.cat-milk{background:rgba(184,115,58,0.16); color:var(--caramel-deep);}
@@ -213,7 +213,10 @@
   .card-icon.cat-sys{background:rgba(203,107,120,0.16); color:var(--berry);}
   
   
-  .card-name{font-size:14.5px; font-weight:500; line-height:1.35; margin-bottom:4px;}
+  .card-name{
+    font-size:14.5px; font-weight:500; line-height:1.35; margin-bottom:4px;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
   .card-tag{font-size:11px; color:var(--ink-soft); display:flex; align-items:center; gap:5px; flex-wrap:wrap;}
   .badge-new{
     position:absolute; top:12px; right:12px; font-size:10px; font-weight:600; color:#fff;
@@ -244,7 +247,7 @@
   .list-row:hover{transform:translateX(4px); box-shadow:var(--shadow-soft);}
   .list-row .card-icon{width:44px; height:44px; margin:0; border-radius:14px; font-size:20px; flex-shrink:0;}
   .list-row .rowmain{flex:1; min-width:0;}
-  .list-row .rowmain .card-name{margin:0; font-size:15px; font-weight:600;}
+  .list-row .rowmain .card-name{margin:0; font-size:15px; font-weight:600; -webkit-line-clamp:unset;}
   .list-row .rowmeta{font-size:11.5px; color:var(--ink-faint); flex-shrink:0;}
 
   /* --- MULTI-SELECT CHECKBOX --- */
@@ -489,27 +492,22 @@
   </div>
 
   <div id="view-dashboard" class="view">
-    <!-- 1. ดึงข้อมูลพื้นฐานที่ต้องรู้มาไว้บนสุด (ตามที่ขอ) -->
+    
+    <!-- 1. ข้อมูลพื้นฐานที่ต้องรู้ (แยกออกมาไว้บนสุด) -->
     <section class="block" id="systemBlock">
-      <div class="block-head"><h2 style="color:var(--berry);">🔒 ข้อมูลพื้นฐานที่ต้องรู้</h2><span class="count" id="systemBlockCount"></span></div>
-      <div class="grid-list" id="systemList"></div>
+      <div class="block-head"><h2>📌 ข้อมูลพื้นฐาน</h2></div>
+      <div class="hscroll" id="systemRow"></div>
     </section>
 
-    <!-- 2. ขยับเมนูขายดีลงมาอยู่ด้านล่างแทน -->
+    <!-- 2. เมนูขายดี -->
     <section class="block" id="popularBlock">
       <div class="block-head"><h2>🔥 เมนูขายดี</h2></div>
       <div class="hscroll" id="popularRow"></div>
     </section>
 
-    <!-- 3. อัปเดตล่าสุด -->
-    <section class="block" id="recentBlock">
-      <div class="block-head"><h2>✨ อัปเดตล่าสุด</h2></div>
-      <div class="grid-list" id="recentList"></div>
-    </section>
-
-    <!-- 4. สูตรเมนูทั่วไปทั้งหมด (แยกระบบออกไปแล้วไม่ให้ซ้ำซ้อน) -->
+    <!-- 3. สูตรเมนูทั้งหมด -->
     <section class="block" id="allBlock">
-      <div class="block-head"><h2 id="allBlockTitle">สูตรเมนูทั่วไปทั้งหมด</h2><span class="count" id="allBlockCount"></span></div>
+      <div class="block-head"><h2 id="allBlockTitle">สูตรเมนูทั้งหมด</h2><span class="count" id="allBlockCount"></span></div>
       <div class="grid-list" id="allList"></div>
     </section>
   </div>
@@ -628,7 +626,7 @@ const recipesCol = collection(db, "recipes");
 
 (function(){
 
-  /* ============ SYSTEM RECIPES (แก้ไขได้ในโค้ดเท่านั้น - เพิ่มสารก่อภูมิแพ้ให้แล้ว) ============ */
+  /* ============ SYSTEM RECIPES ============ */
   const SYSTEM_RECIPES = [
     {
       id: 'sys_3', name: '⚠️ ข้อมูลสารก่อภูมิแพ้ในเครื่องดื่ม (อ่านก่อนทำ!)', category: 'พื้นฐาน',
@@ -915,20 +913,17 @@ const recipesCol = collection(db, "recipes");
   }
 
   function renderDashboard(skeleton){
-    const systemRow = document.getElementById('systemList');
+    const systemBlock = document.getElementById('systemBlock');
+    const systemRow = document.getElementById('systemRow');
+    const popularBlock = document.getElementById('popularBlock');
     const popularRow = document.getElementById('popularRow');
-    const recentList = document.getElementById('recentList');
     const allList = document.getElementById('allList');
     const allTitle = document.getElementById('allBlockTitle');
     const allCount = document.getElementById('allBlockCount');
-    const systemBlock = document.getElementById('systemBlock');
-    const popularBlock = document.getElementById('popularBlock');
-    const recentBlock = document.getElementById('recentBlock');
 
     if(skeleton){
-      if(systemRow) systemRow.innerHTML = Array(2).fill('<div class="skel skel-row"></div>').join('');
+      systemRow.innerHTML = Array(2).fill('<div class="skel skel-card"></div>').join('');
       popularRow.innerHTML = Array(3).fill('<div class="skel skel-card"></div>').join('');
-      recentList.innerHTML = Array(3).fill('<div class="skel skel-row"></div>').join('');
       allList.innerHTML = Array(4).fill('<div class="skel skel-row"></div>').join('');
       return;
     }
@@ -936,41 +931,34 @@ const recipesCol = collection(db, "recipes");
     const filtered = recipes.filter(matchesFilter);
     const searching = state.activeCat!=='all' || state.search.trim() || state.selectMode;
 
-    // ถ้ามีการค้นหา ให้ซ่อนหมวดด้านบนเพื่อโชว์ผลการค้นหาแบบเต็มๆ ด้านล่าง
+    // ซ่อนหมวดหมู่เลื่อนแนวนอนถ้ามีการค้นหา หรือเลือกหมวดหมู่ย่อย
     systemBlock.style.display = searching ? 'none' : '';
     popularBlock.style.display = searching ? 'none' : '';
-    recentBlock.style.display = searching ? 'none' : '';
 
     if(!searching){
-      // 1. โชว์ข้อมูลพื้นฐานบนสุด
-      const sys = recipes.filter(r=>r.isSystem);
-      systemRow.innerHTML = sys.length ? sys.map(rowHtml).join('') : '<div style="color:var(--ink-faint); font-size:13px; padding:10px;">ไม่มีข้อมูลพื้นฐาน</div>';
+      // โชว์หมวดข้อมูลพื้นฐาน (เลื่อนแนวนอน)
+      const systems = recipes.filter(r=>r.isSystem).sort((a,b)=>b.updatedAt-a.updatedAt);
+      systemRow.innerHTML = systems.length ? systems.map(r=>cardHtml(r,true)).join('') : '<div style="color:var(--ink-faint); font-size:13px; padding:10px;">ไม่มีข้อมูลพื้นฐาน</div>';
       attachCardHandlers(systemRow);
-      if(document.getElementById('systemBlockCount')) {
-        document.getElementById('systemBlockCount').textContent = sys.length + ' รายการ';
-      }
 
-      // 2. โชว์เมนูขายดี
+      // โชว์เมนูขายดี
       const popular = recipes.filter(r=>r.popular && !r.isSystem).slice(0,6);
       popularRow.innerHTML = popular.length ? popular.map(r=>cardHtml(r,true)).join('') : '<div style="color:var(--ink-faint); font-size:13px; padding:10px;">ยังไม่มีเมนูขายดี</div>';
       attachCardHandlers(popularRow);
-
-      // 3. โชว์อัปเดตล่าสุด
-      const recent = [...recipes].filter(r=>!r.isSystem).sort((a,b)=>b.updatedAt-a.updatedAt).slice(0,3);
-      recentList.innerHTML = recent.map(rowHtml).join('');
-      attachCardHandlers(recentList);
     }
 
-    allTitle.textContent = state.selectMode ? 'ติ๊กเลือกรายการที่ต้องการลบ' : (searching ? 'ผลการค้นหา / หมวดหมู่' : 'สูตรเมนูทั่วไปทั้งหมด');
+    allTitle.textContent = state.selectMode ? 'ติ๊กเลือกรายการที่ต้องการลบ' : (searching ? 'ผลการค้นหา / หมวดหมู่' : 'สูตรเมนูทั้งหมด');
     
-    // เมื่ออยู่หน้าหลักปกติ ให้ซ่อนเมนูระบบออกจาก "สูตรเมนูทั่วไปทั้งหมด" ด้านล่าง จะได้ไม่ซ้ำซ้อนกับข้างบน
+    // ถ้าแสดงผลหน้าแรก (ไม่ได้หา) ให้เอา isSystem ออกจากลิสต์ล่างสุดเพราะโชว์ด้านบนไปแล้ว
+    // แต่ถ้าค้นหา หรือกดหมวดหมู่ "พื้นฐาน" จะดึงมาแสดงเป็นลิสต์เหมือนเดิม
     const displayList = searching ? filtered : filtered.filter(r => !r.isSystem);
-    allCount.textContent = displayList.length + ' สูตร';
+
+    allCount.textContent = displayList.length + ' รายการ';
 
     if(displayList.length===0){
       allList.innerHTML = `<div class="empty">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-        <p>ไม่พบสูตรที่ตรงกับการค้นหา</p>
+        <p>ไม่พบรายการที่ตรงกับการค้นหา</p>
       </div>`;
     } else {
       const sorted = displayList.sort((a,b)=>{
