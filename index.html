@@ -54,6 +54,46 @@
     *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
   }
 
+  /* ---------- LOGIN GATE ---------- */
+  #loginGate{
+    position:fixed; inset:0; z-index:2000;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    background:
+      radial-gradient(900px 600px at 50% 0%, var(--bg-3) 0%, transparent 60%),
+      radial-gradient(900px 600px at 50% 100%, var(--bg-2) 0%, transparent 60%),
+      var(--bg-1);
+    transition:opacity .35s ease, visibility .35s ease;
+  }
+  #loginGate.hide{opacity:0; visibility:hidden; pointer-events:none;}
+  .login-card{
+    width:100%; max-width:320px; padding:32px 26px; border-radius:var(--radius-xl);
+    display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center;
+  }
+  .login-card .splash-mark{margin-bottom:2px;}
+  .login-card h2{font-size:17px; margin:0; font-weight:600;}
+  .login-card p{font-size:12.5px; color:var(--ink-soft); margin:0; line-height:1.5;}
+  #loginInput{
+    width:100%; padding:13px 16px; border-radius:999px; border:1px solid var(--glass-border);
+    background:var(--glass-strong); font-size:16px; text-align:center; letter-spacing:3px;
+    outline:none; font-family:inherit; color:var(--ink); margin-top:6px;
+  }
+  #loginInput:focus{border-color:var(--caramel);}
+  #loginBtn{
+    width:100%; padding:13px; border-radius:999px; border:none;
+    background:linear-gradient(145deg,var(--caramel),var(--caramel-deep)); color:#fff;
+    font-size:14.5px; font-weight:600; transition:transform .15s ease;
+  }
+  #loginBtn:active{transform:scale(.97);}
+  #loginError{font-size:12px; color:var(--berry); min-height:14px; margin:0;}
+
+  /* ---------- DEVTOOLS WARNING ---------- */
+  #dtWarning{
+    position:fixed; inset:0; z-index:3000; display:none;
+    align-items:center; justify-content:center; text-align:center; padding:30px;
+    background:var(--bg-1); color:var(--ink); font-family:'Prompt', sans-serif;
+  }
+  #dtWarning.show{display:flex;}
+
   /* ---------- SPLASH ---------- */
   #splash{
     position:fixed; inset:0; z-index:999;
@@ -270,6 +310,8 @@
   .savestate .dot{width:6px; height:6px; border-radius:50%; background:var(--matcha); opacity:0; transition:opacity .3s ease;}
   .savestate.saving .dot{opacity:1; background:var(--caramel); animation:dotFade 0.8s ease-in-out infinite;}
   .savestate.saved .dot{opacity:1; background:var(--matcha); animation:none;}
+  .savestate.error .dot{opacity:1; background:var(--berry); animation:none;}
+  .savestate.error{color:var(--berry);}
 
   .field{margin-bottom:16px;}
   .field label{display:block; font-size:12.5px; font-weight:500; color:var(--ink-soft); margin-bottom:6px;}
@@ -347,6 +389,27 @@
 </style>
 </head>
 <body>
+
+<div id="loginGate">
+  <div class="login-card glass">
+    <div class="splash-mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M5 8h14l-1.2 10.2A2 2 0 0 1 15.8 20H8.2a2 2 0 0 1-2-1.8L5 8Z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><path d="M3 8h18" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
+    <h2>ชานมฮับ</h2>
+    <p>คู่มือสูตรพนักงาน — สำหรับพนักงานเท่านั้น<br>กรุณาใส่รหัสผ่าน</p>
+    <input id="loginInput" type="password" inputmode="numeric" placeholder="••••••" autocomplete="off" maxlength="20">
+    <p id="loginError"></p>
+    <button id="loginBtn">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<div id="dtWarning">
+  <div>
+    <div style="font-size:40px; margin-bottom:12px;">🔒</div>
+    <div style="font-size:16px; font-weight:600; margin-bottom:6px;">หน้านี้สำหรับพนักงานเท่านั้น</div>
+    <div style="font-size:13px; color:var(--ink-soft);">กรุณาปิดเครื่องมือนักพัฒนาเพื่อกลับเข้าใช้งาน</div>
+  </div>
+</div>
 
 <div id="splash">
   <div class="splash-mark">
@@ -612,6 +675,7 @@ const recipesCol = collection(db, "recipes");
   let recipes = [];
   let lastRawDocs = [];
   const pendingDeleteIds = new Set();
+  const draftSavedIds = new Set(); // ids of in-progress new recipes that have actually hit Firestore
   let firstLoadDone = false;
 
   /* ============ STATE ============ */
@@ -949,7 +1013,21 @@ const recipesCol = collection(db, "recipes");
     }
     document.getElementById('editTitle').textContent = isNew ? 'สูตรใหม่' : 'แก้ไขสูตร';
     document.getElementById('f-name').value = state.editing.name;
-    document.getElementById('f-cat').value = state.editing.category;
+
+    const catSelect = document.getElementById('f-cat');
+    const catValue = state.editing.category;
+    const hasOption = Array.from(catSelect.options).some(o=>o.value===catValue);
+    if(catValue && !hasOption){
+      // this recipe's category isn't in the dropdown anymore (renamed/removed) —
+      // keep it as a temporary option instead of silently reassigning the recipe
+      // to a different category on the next save
+      const opt = document.createElement('option');
+      opt.value = catValue;
+      opt.textContent = catValue + ' (ไม่อยู่ในรายการ)';
+      catSelect.appendChild(opt);
+    }
+    catSelect.value = catValue;
+
     document.getElementById('saveState').className = 'savestate';
     document.getElementById('saveStateText').textContent = '';
     renderIngredientsEdit();
@@ -962,7 +1040,7 @@ const recipesCol = collection(db, "recipes");
     wrap.innerHTML = state.editing.ingredients.map((ing,i)=>`
       <div class="rowfields" data-i="${i}">
         <div><label>วัตถุดิบ</label><input type="text" class="ing-name-in" value="${escapeHtml(ing.name)}" placeholder="เช่น ชาดำ"></div>
-        <div><label>ปริมาณ</label><input type="number" step="0.5" class="ing-amt-in" value="${ing.amt}"></div>
+        <div><label>ปริมาณ</label><input type="number" step="0.5" min="0" class="ing-amt-in" value="${ing.amt}"></div>
         <div><label>หน่วย</label>
           <select class="ing-unit-in">
             ${['ml','g','oz','ช้อนโต๊ะ','ช้อนชา'].map(u=>`<option value="${u}" ${u===ing.unit?'selected':''}>${u}</option>`).join('')}
@@ -1006,31 +1084,47 @@ const recipesCol = collection(db, "recipes");
     document.getElementById('saveStateText').textContent = 'กำลังบันทึก...';
     clearTimeout(state.saveTimeout);
     state.saveTimeout = setTimeout(async ()=>{
-      await commitEditToStore(true);
-      el.className = 'savestate saved';
-      document.getElementById('saveStateText').textContent = 'บันทึกแล้ว';
+      const ok = await commitEditToStore(true);
+      el.className = ok ? 'savestate saved' : 'savestate error';
+      document.getElementById('saveStateText').textContent = ok ? 'บันทึกแล้ว' : 'บันทึกไม่สำเร็จ';
     }, 500);
   }
 
   async function commitEditToStore(silent){
     const e = state.editing;
-    e.name = document.getElementById('f-name').value.trim() || 'สูตรไม่มีชื่อ';
-    e.category = document.getElementById('f-cat').value;
-    e.icon = catMeta[e.category].icon;
-    e.updatedAt = Date.now();
-    e.ingredients = e.ingredients.filter(x=>x.name.trim());
-    e.steps = e.steps.filter(x=>x.text.trim());
-
-    const { id, ...data } = e;
     try{
+      e.name = document.getElementById('f-name').value.trim() || 'สูตรไม่มีชื่อ';
+      const selectedCat = document.getElementById('f-cat').value;
+      // guard: if the selected/previous category no longer has an entry in catMeta
+      // (e.g. it was renamed or removed), fall back instead of crashing the save
+      e.category = catMeta[selectedCat] ? selectedCat : (catMeta[e.category] ? e.category : Object.keys(catMeta)[0]);
+      e.icon = catMeta[e.category].icon;
+      e.updatedAt = Date.now();
+      e.ingredients = e.ingredients.filter(x=>x.name.trim());
+      e.steps = e.steps.filter(x=>x.text.trim());
+
+      const { id, ...data } = e;
       await setDoc(doc(db, 'recipes', id), data, { merge:true });
+
+      // update the local cache immediately — don't wait for the Firestore
+      // realtime listener to echo this write back, since that round trip
+      // (or a race with the dashboard render right after this call) is what
+      // made a just-saved recipe briefly disappear / fail to open
+      const savedDoc = { id, ...data };
+      const idx = lastRawDocs.findIndex(x=>x.id===id);
+      if(idx>=0){ lastRawDocs[idx] = savedDoc; } else { lastRawDocs.push(savedDoc); }
+      recomputeRecipes();
+
       if(!silent){
         toast(state.isNew ? `บันทึกสูตร "${e.name}" แล้ว` : `อัปเดตสูตร "${e.name}" แล้ว`);
       }
       state.isNew = false;
+      draftSavedIds.add(id);
+      return true;
     }catch(err){
       console.error('save error', err);
       toast('บันทึกไม่สำเร็จ ตรวจสอบการเชื่อมต่อ', true);
+      return false;
     }
   }
 
@@ -1051,18 +1145,46 @@ const recipesCol = collection(db, "recipes");
 
   document.getElementById('addRecipeBtn').addEventListener('click', ()=> openEdit(null, true));
 
+  function editHasContent(){
+    const nameVal = document.getElementById('f-name').value.trim();
+    return !!nameVal ||
+      state.editing.ingredients.some(x=>x.name && x.name.trim()) ||
+      state.editing.steps.some(x=>x.text && x.text.trim());
+  }
+
   document.getElementById('backFromDetail').addEventListener('click', ()=>{ showView('dashboard'); renderDashboard(); });
   document.getElementById('backFromEdit').addEventListener('click', async ()=>{
     clearTimeout(state.saveTimeout);
-    await commitEditToStore(true);
+    if(state.isNew && !editHasContent()){
+      // nothing was ever typed — don't leave behind a blank "สูตรไม่มีชื่อ" recipe.
+      // if a stray autosave already wrote a partial draft in the background, clean it up.
+      if(draftSavedIds.has(state.editing.id)){
+        try{
+          await deleteDoc(doc(db, 'recipes', state.editing.id));
+          const idx = lastRawDocs.findIndex(x=>x.id===state.editing.id);
+          if(idx>=0){ lastRawDocs.splice(idx,1); recomputeRecipes(); }
+        }catch(err){
+          console.error('draft cleanup error', err);
+        }
+        draftSavedIds.delete(state.editing.id);
+      }
+    } else {
+      await commitEditToStore(true);
+    }
     showView('dashboard');
     renderDashboard();
   });
   document.getElementById('doneEditBtn').addEventListener('click', async ()=>{
     clearTimeout(state.saveTimeout);
-    await commitEditToStore(false);
-    showView('dashboard');
-    renderDashboard();
+    if(!editHasContent()){
+      toast('กรุณาใส่ชื่อเมนูหรือส่วนผสม/ขั้นตอนอย่างน้อยหนึ่งอย่างก่อนบันทึก', true);
+      return;
+    }
+    const ok = await commitEditToStore(false);
+    if(ok){
+      showView('dashboard');
+      renderDashboard();
+    }
   });
 
   document.getElementById('editBtn').addEventListener('click', ()=>{
@@ -1115,6 +1237,83 @@ const recipesCol = collection(db, "recipes");
     }
   }, 6000);
 
+})();
+</script>
+
+<script>
+(function(){
+  /* ============ LOGIN GATE ============
+     NOTE: this is a front-end deterrent (keeps casual/curious people out),
+     not real security. Anyone who reads the page source can find PASSWORD
+     below. If the recipes must stay truly private, restrict access at the
+     Firestore security-rules level too — that's the only place actual
+     enforcement can happen. Change PASSWORD before publishing this file. */
+  const PASSWORD = 'chanomhub2026'; // <-- change this
+  const AUTH_KEY = 'chanomhub_auth_ok';
+
+  const gate = document.getElementById('loginGate');
+  const input = document.getElementById('loginInput');
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginError');
+
+  function tryLogin(){
+    if(input.value === PASSWORD){
+      sessionStorage.setItem(AUTH_KEY, '1');
+      gate.classList.add('hide');
+      err.textContent = '';
+    } else {
+      err.textContent = 'รหัสผ่านไม่ถูกต้อง';
+      input.value = '';
+      input.focus();
+      gate.style.animation = 'none';
+      requestAnimationFrame(()=>{ gate.style.animation = ''; });
+    }
+  }
+
+  if(sessionStorage.getItem(AUTH_KEY) === '1'){
+    gate.classList.add('hide');
+  } else {
+    setTimeout(()=>input.focus(), 200);
+  }
+
+  btn.addEventListener('click', tryLogin);
+  input.addEventListener('keydown', e=>{ if(e.key === 'Enter') tryLogin(); });
+
+  /* ============ RIGHT-CLICK / DEVTOOLS DETERRENTS ============
+     These raise the effort needed to view source casually. They do not
+     stop anyone determined (browser dev tools can still be forced open,
+     view-source: works from the URL bar in most browsers, etc). Treat
+     this as "keep honest people out," not a real access-control layer. */
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  document.addEventListener('keydown', e => {
+    const k = e.key;
+    const blocked =
+      k === 'F12' ||
+      (e.ctrlKey && e.shiftKey && ['I','J','C','K'].includes(k.toUpperCase())) ||
+      (e.metaKey && e.altKey && ['I','J','C'].includes(k.toUpperCase())) || // Mac Safari/Chrome
+      (e.ctrlKey && k.toUpperCase() === 'U'); // view-source
+    if(blocked){
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+
+  const dtWarning = document.getElementById('dtWarning');
+  let dtOpen = false;
+  function setDtState(isOpen){
+    if(isOpen === dtOpen) return;
+    dtOpen = isOpen;
+    dtWarning.classList.toggle('show', isOpen);
+  }
+  // Heuristic: a big gap between outer and inner window size usually means
+  // docked dev tools. Not reliable for undocked/detached tools, but catches
+  // the common case without hurting normal window resizing.
+  setInterval(()=>{
+    const widthGap = window.outerWidth - window.innerWidth;
+    const heightGap = window.outerHeight - window.innerHeight;
+    setDtState(widthGap > 170 || heightGap > 170);
+  }, 700);
 })();
 </script>
 </body>
