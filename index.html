@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GAGA Recipe Book — สมุดสูตรน้ำกาก้า</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0a0a0a;
+    --bg-1:#141414;
+    --bg-2:#1c1c1c;
+    --pink:#e8232c;
+    --pink-soft:#ff5b3d;
+    --purple:#ffab1f;
+    --violet-deep:#7a1712;
+    --gold:#ffcf4d;
+    --glass:rgba(255,255,255,0.055);
+    --glass-strong:rgba(255,255,255,0.09);
+    --glass-border:rgba(255,255,255,0.14);
+    --text:#f6f3fb;
+    --text-dim:rgba(246,243,251,0.62);
+    --text-faint:rgba(246,243,251,0.38);
+    --danger:#ff5470;
+    --ok:#3ee08b;
+    --radius-xl:34px;
+    --radius-lg:26px;
+    --radius-md:18px;
+    --radius-sm:12px;
+    --spring: cubic-bezier(.2,1.1,.3,1);
+    --spring-soft: cubic-bezier(.3,1,.4,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(120% 80% at 15% -10%, rgba(232,35,44,0.20), transparent 60%),
+      radial-gradient(100% 70% at 100% 0%, rgba(255,171,31,0.14), transparent 55%),
+      var(--bg-0);
+    color:var(--text);
+    font-family:'Sarabun',sans-serif;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:'Kanit',sans-serif;}
+  ::selection{background:var(--pink); color:#fff;}
+  ::-webkit-scrollbar{width:8px;}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.14); border-radius:10px;}
+
+  /* ---------- Ambient blobs ---------- */
+  .orb{position:fixed; border-radius:50%; filter:blur(70px); opacity:.55; z-index:0; pointer-events:none;}
+  .orb1{width:420px;height:420px; background:radial-gradient(circle, var(--pink), transparent 70%); top:-140px; left:-120px; animation:float1 16s ease-in-out infinite;}
+  .orb2{width:380px;height:380px; background:radial-gradient(circle, var(--purple), transparent 70%); bottom:-140px; right:-100px; animation:float2 19s ease-in-out infinite;}
+  .orb3{width:260px;height:260px; background:radial-gradient(circle, var(--gold), transparent 72%); top:40%; right:15%; opacity:.22; animation:float3 22s ease-in-out infinite;}
+  @keyframes float1{0%,100%{transform:translate(0,0)} 50%{transform:translate(40px,60px)}}
+  @keyframes float2{0%,100%{transform:translate(0,0)} 50%{transform:translate(-50px,-40px)}}
+  @keyframes float3{0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-30px,30px) scale(1.15)}}
+
+  /* ---------- Glass base ---------- */
+  .glass{
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(24px) saturate(160%);
+    -webkit-backdrop-filter:blur(24px) saturate(160%);
+    box-shadow:0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .glass-strong{background:var(--glass-strong);}
+
+  button{font-family:inherit; cursor:pointer;}
+  input,textarea{font-family:inherit;}
+
+  /* ================= Dynamic Island ================= */
+  #island{
+    position:fixed; top:14px; left:50%; transform:translateX(-50%);
+    z-index:500;
+    display:flex; align-items:center; gap:10px;
+    height:38px; min-width:128px; padding:0 18px;
+    background:#000;
+    border-radius:999px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.08);
+    transition:min-width .5s var(--spring), height .5s var(--spring), padding .5s var(--spring), background .4s ease;
+    overflow:hidden;
+    white-space:nowrap;
+  }
+  #island.expand{min-width:230px; height:44px; padding:0 20px;}
+  #island .dot{width:8px; height:8px; border-radius:50%; background:var(--pink); flex-shrink:0; box-shadow:0 0 10px var(--pink);}
+  #island.saving .dot{background:var(--gold); box-shadow:0 0 10px var(--gold); animation:pulse 1s infinite;}
+  #island.saved .dot{background:var(--ok); box-shadow:0 0 10px var(--ok);}
+  #island.notify .dot{background:var(--pink-soft); box-shadow:0 0 10px var(--pink-soft);}
+  @keyframes pulse{0%,100%{opacity:1; transform:scale(1)} 50%{opacity:.4; transform:scale(.7)}}
+  #island .txt{font-size:12.5px; color:rgba(255,255,255,0.88); font-weight:500; opacity:0; transition:opacity .3s ease .1s;}
+  #island.expand .txt{opacity:1;}
+  #island .clock{font-size:11.5px; color:rgba(255,255,255,0.5); font-variant-numeric:tabular-nums; flex-shrink:0;}
+
+  /* ================= Auth / Mode select ================= */
+  #auth{
+    position:fixed; inset:0; z-index:200;
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+    transition:opacity .6s var(--spring-soft), visibility .6s;
+  }
+  #auth.hide{opacity:0; visibility:hidden; pointer-events:none;}
+  .auth-card{
+    width:100%; max-width:400px;
+    border-radius:var(--radius-xl);
+    padding:38px 30px 30px;
+    text-align:center;
+    animation:cardIn .7s var(--spring);
+    position:relative;
+    z-index:1;
+  }
+  @keyframes cardIn{from{opacity:0; transform:translateY(24px) scale(.96)} to{opacity:1; transform:translateY(0) scale(1)}}
+  .logo-mark{
+    width:74px; height:74px; margin:0 auto 18px;
+    border-radius:22px;
+    background:linear-gradient(145deg, var(--pink), var(--purple));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Kanit'; font-weight:800; font-size:26px; color:#fff;
+    box-shadow:0 12px 30px rgba(232,35,44,0.35);
+    position:relative;
+  }
+  .logo-mark::after{
+    content:''; position:absolute; inset:-6px; border-radius:26px;
+    background:linear-gradient(145deg, var(--pink), var(--purple));
+    opacity:.35; filter:blur(14px); z-index:-1;
+  }
+  .auth-card h1{font-size:26px; margin:0 0 4px; font-weight:700; letter-spacing:.3px;}
+  .auth-card p{color:var(--text-dim); font-size:14px; margin:0 0 28px;}
+  .mode-btn{
+    width:100%; display:flex; align-items:center; gap:14px;
+    padding:16px 18px; margin-bottom:12px;
+    border-radius:var(--radius-md); border:1px solid var(--glass-border);
+    background:var(--glass); color:var(--text);
+    text-align:left; transition:transform .35s var(--spring), background .3s, border-color .3s;
+  }
+  .mode-btn:hover{transform:translateY(-2px) scale(1.01); background:var(--glass-strong); border-color:rgba(255,255,255,0.28);}
+  .mode-btn:active{transform:scale(.98);}
+  .mode-ico{
+    width:42px; height:42px; border-radius:13px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:19px;
+  }
+  .mode-btn.admin .mode-ico{background:linear-gradient(145deg, var(--gold), var(--pink));}
+  .mode-btn.staff .mode-ico{background:linear-gradient(145deg, #6b6b6b, #2c2c2c);}
+  .mode-btn.admin{border-color:rgba(255,207,77,0.25);}
+  @keyframes shakeX{0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(7px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(4px)}}
+  .shake{animation:shakeX .4s var(--spring);}
+  .mode-btn b{display:block; font-size:15px; font-weight:600;}
+  .mode-btn span{display:block; font-size:12.5px; color:var(--text-faint); margin-top:2px;}
+
+  /* ================= App shell ================= */
+  #app{
+    position:relative; z-index:1;
+    min-height:100vh;
+    padding:76px 16px 108px;
+    max-width:900px; margin:0 auto;
+    opacity:0; transform:translateY(14px);
+    transition:opacity .6s var(--spring-soft), transform .6s var(--spring-soft);
+  }
+  #app.show{opacity:1; transform:translateY(0);}
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 20px; border-radius:24px; margin-bottom:18px;
+  }
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand .mark{width:34px; height:34px; border-radius:11px; background:linear-gradient(145deg, var(--pink), var(--purple)); display:flex; align-items:center; justify-content:center; font-family:'Kanit'; font-weight:800; font-size:13px;}
+  .brand b{font-family:'Kanit'; font-size:16px; letter-spacing:.2px;}
+  .badge{
+    font-size:11px; font-weight:600; padding:5px 11px; border-radius:999px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .badge.admin{background:rgba(255,207,77,0.14); color:var(--gold); border:1px solid rgba(255,207,77,0.3);}
+  .badge.staff{background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.75); border:1px solid rgba(255,255,255,0.18);}
+  .switch-mode{background:none; border:none; color:var(--text-faint); font-size:12px; text-decoration:underline; padding:4px;}
+
+  /* ---------- Sections ---------- */
+  .page{display:none; animation:pageIn .5s var(--spring-soft);}
+  .page.active{display:block;}
+  @keyframes pageIn{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)}}
+
+  .section-title{font-size:22px; font-weight:700; margin:6px 2px 16px; display:flex; align-items:center; gap:8px;}
+  .section-title small{font-size:12px; font-weight:400; color:var(--text-faint);}
+
+  /* Hero card on open-shop page */
+  .hero-card{
+    border-radius:var(--radius-xl); padding:26px 24px; margin-bottom:16px;
+    background:
+      radial-gradient(120% 140% at 0% 0%, rgba(232,35,44,0.22), transparent 60%),
+      radial-gradient(120% 140% at 100% 100%, rgba(255,171,31,0.18), transparent 60%),
+      var(--glass);
+  }
+  .hero-card .greet{font-size:13px; color:var(--text-dim); margin-bottom:4px;}
+  .hero-card h2{font-size:24px; margin:0 0 2px;}
+  .hero-card .date{font-size:12.5px; color:var(--text-faint);}
+
+  .stat-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px;}
+  .stat-card{border-radius:var(--radius-md); padding:16px 14px; text-align:center;}
+  .stat-card .num{font-family:'Kanit'; font-size:24px; font-weight:700; background:linear-gradient(145deg,var(--pink-soft),var(--purple)); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .stat-card .lbl{font-size:11px; color:var(--text-faint); margin-top:2px;}
+
+  .checklist{border-radius:var(--radius-lg); padding:8px; margin-bottom:16px;}
+  .check-item{
+    display:flex; align-items:center; gap:12px;
+    padding:13px 14px; border-radius:var(--radius-md);
+    transition:background .3s;
+  }
+  .check-item + .check-item{margin-top:2px;}
+  .check-item:hover{background:rgba(255,255,255,0.04);}
+  .checkbox{
+    width:24px; height:24px; border-radius:50%; flex-shrink:0;
+    border:2px solid rgba(255,255,255,0.28);
+    display:flex; align-items:center; justify-content:center;
+    transition:all .35s var(--spring); cursor:pointer;
+  }
+  .checkbox.done{background:linear-gradient(145deg, var(--pink), var(--purple)); border-color:transparent; transform:scale(1.05);}
+  .checkbox svg{width:13px; height:13px; opacity:0; transform:scale(.5); transition:all .25s var(--spring);}
+  .checkbox.done svg{opacity:1; transform:scale(1);}
+  .check-item .clabel{font-size:14.5px; transition:color .3s, opacity .3s;}
+  .check-item.done .clabel{color:var(--text-faint); text-decoration:line-through; opacity:.7;}
+
+  .admin-only{display:none;}
+  body.role-admin .admin-only{display:revert;}
+  body.role-admin .staff-hide{display:none;}
+
+  .ghost-btn{
+    border-radius:999px; padding:10px 18px; font-size:13px; font-weight:600;
+    border:1px solid var(--glass-border); background:var(--glass); color:var(--text);
+    transition:transform .3s var(--spring), background .3s;
+  }
+  .ghost-btn:hover{background:var(--glass-strong); transform:translateY(-1px);}
+  .ghost-btn:active{transform:scale(.96);}
+  .ghost-btn.danger{color:var(--danger); border-color:rgba(255,84,112,0.35);}
+
+  /* ---------- Recipes ---------- */
+  .searchbar{
+    display:flex; align-items:center; gap:10px;
+    border-radius:999px; padding:12px 18px; margin-bottom:16px;
+  }
+  .searchbar input{flex:1; background:none; border:none; outline:none; color:var(--text); font-size:14.5px;}
+  .searchbar input::placeholder{color:var(--text-faint);}
+
+  .chip-row{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; margin-bottom:14px; scrollbar-width:none;}
+  .chip-row::-webkit-scrollbar{display:none;}
+  .chip{
+    flex-shrink:0; padding:8px 16px; border-radius:999px; font-size:12.5px; font-weight:600;
+    border:1px solid var(--glass-border); background:var(--glass); color:var(--text-dim);
+    transition:all .3s var(--spring); white-space:nowrap;
+  }
+  .chip.active{background:linear-gradient(145deg, var(--pink), var(--pink-soft)); color:#fff; border-color:transparent; box-shadow:0 6px 16px rgba(232,35,44,0.3);}
+  .chip:active{transform:scale(.94);}
+
+  .cat-pill{
+    display:inline-block; font-size:10px; font-weight:700; padding:4px 10px; margin-bottom:10px;
+    border-radius:999px; background:rgba(255,255,255,0.1); color:var(--text-dim); border:1px solid var(--glass-border);
+  }
+
+  .recipe-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px; margin-bottom:90px;}
+  .recipe-card{
+    border-radius:var(--radius-lg); padding:18px; cursor:pointer; position:relative; overflow:hidden;
+    transition:transform .4s var(--spring), border-color .3s;
+    animation:cardIn .5s var(--spring-soft);
+  }
+  .recipe-card:hover{transform:translateY(-4px) scale(1.015); border-color:rgba(255,255,255,0.3);}
+  .recipe-card::before{
+    content:''; position:absolute; top:-40%; right:-30%; width:140px; height:140px; border-radius:50%;
+    background:radial-gradient(circle, rgba(232,35,44,0.25), transparent 70%); pointer-events:none;
+  }
+  .recipe-card h3{font-size:17px; margin:0 0 10px; padding-right:6px; position:relative;}
+  .recipe-meta{display:flex; gap:12px; font-size:11.5px; color:var(--text-faint);}
+  .recipe-meta span{display:flex; align-items:center; gap:4px;}
+  .empty-state{
+    text-align:center; padding:60px 20px; color:var(--text-faint); font-size:14px;
+    border-radius:var(--radius-lg); grid-column:1/-1;
+  }
+  .empty-state .emo{font-size:38px; display:block; margin-bottom:10px;}
+
+  .fab{
+    position:fixed; right:20px; bottom:96px; z-index:60;
+    width:58px; height:58px; border-radius:50%; border:none;
+    background:linear-gradient(145deg, var(--pink), var(--purple));
+    color:#fff; font-size:26px; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 14px 34px rgba(232,35,44,0.4);
+    transition:transform .4s var(--spring);
+    display:none;
+  }
+  .fab:active{transform:scale(.88) rotate(90deg);}
+
+  /* ---------- Editor overlay ---------- */
+  #editorOverlay{
+    position:fixed; inset:0; z-index:300;
+    background:rgba(4,3,8,0.55); backdrop-filter:blur(6px);
+    display:flex; align-items:flex-end; justify-content:center;
+    opacity:0; visibility:hidden; transition:opacity .4s ease, visibility .4s;
+  }
+  #editorOverlay.open{opacity:1; visibility:visible;}
+  .editor-sheet{
+    width:100%; max-width:640px; max-height:88vh; overflow-y:auto;
+    background:linear-gradient(180deg, var(--bg-2), var(--bg-1));
+    border:1px solid var(--glass-border);
+    border-radius:32px 32px 0 0;
+    padding:14px 22px 26px;
+    transform:translateY(100%);
+    transition:transform .5s var(--spring);
+  }
+  #editorOverlay.open .editor-sheet{transform:translateY(0);}
+  .sheet-handle{width:40px; height:5px; border-radius:3px; background:rgba(255,255,255,0.2); margin:6px auto 16px;}
+  .sheet-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;}
+  .sheet-top h2{font-size:19px; margin:0;}
+  .icon-btn{width:34px; height:34px; border-radius:50%; border:none; background:var(--glass); color:var(--text); display:flex; align-items:center; justify-content:center; font-size:16px;}
+
+  .field-label{font-size:11.5px; text-transform:uppercase; letter-spacing:.6px; color:var(--text-faint); margin:18px 2px 8px;}
+  .input-field{
+    width:100%; border-radius:16px; padding:14px 16px; border:1px solid var(--glass-border);
+    background:var(--glass); color:var(--text); font-size:15px; outline:none;
+    transition:border-color .3s, background .3s;
+  }
+  .input-field:focus{border-color:var(--pink); background:var(--glass-strong);}
+
+  .row-list .row-item{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+  .row-item .input-field{flex:1;}
+  .row-item .step-num{
+    width:26px; height:26px; border-radius:50%; background:linear-gradient(145deg,var(--pink),var(--purple));
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;
+  }
+  .row-del{
+    width:32px; height:32px; border-radius:50%; border:none; background:rgba(255,84,112,0.12); color:var(--danger);
+    flex-shrink:0; font-size:16px; display:flex; align-items:center; justify-content:center;
+    transition:transform .3s var(--spring), background .3s;
+  }
+  .row-del:hover{background:rgba(255,84,112,0.22); transform:scale(1.08);}
+  .add-row-btn{
+    width:100%; padding:11px; border-radius:14px; border:1px dashed rgba(255,255,255,0.25);
+    background:transparent; color:var(--text-dim); font-size:13.5px; margin-top:2px;
+    transition:background .3s, border-color .3s;
+  }
+  .add-row-btn:hover{background:var(--glass); border-color:rgba(255,255,255,0.4);}
+
+  .editor-sheet.readonly-mode .row-del,
+  .editor-sheet.readonly-mode .add-row-btn{display:none;}
+  .editor-sheet.readonly-mode .input-field{background:rgba(255,255,255,0.03); color:var(--text-dim); cursor:default;}
+  .editor-sheet.readonly-mode .field-label::after{content:' 🔒'; opacity:.5; font-size:10px;}
+  #settingsOverlay{
+    position:fixed; inset:0; z-index:300;
+    background:rgba(4,3,8,0.55); backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    opacity:0; visibility:hidden; transition:opacity .4s ease, visibility .4s;
+  }
+  #settingsOverlay.open{opacity:1; visibility:visible;}
+  #settingsOverlay .editor-sheet{
+    border-radius:28px; transform:scale(.92); transition:transform .4s var(--spring);
+  }
+  #settingsOverlay.open .editor-sheet{transform:scale(1);}
+
+  .autosave-row{display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--text-faint); margin-top:16px; height:16px;}
+  .autosave-row .sdot{width:6px;height:6px;border-radius:50%;background:var(--ok); transition:opacity .3s;}
+
+  .sheet-actions{display:flex; gap:10px; margin-top:22px;}
+  .btn-primary{
+    flex:1; padding:14px; border-radius:16px; border:none; color:#fff; font-weight:600; font-size:14.5px;
+    background:linear-gradient(145deg, var(--pink), var(--purple));
+    transition:transform .3s var(--spring), box-shadow .3s;
+    box-shadow:0 10px 24px rgba(232,35,44,0.28);
+  }
+  .btn-primary:active{transform:scale(.97);}
+  .btn-delete{padding:14px 18px; border-radius:16px; border:1px solid rgba(255,84,112,0.35); background:rgba(255,84,112,0.1); color:var(--danger); font-weight:600; font-size:14px;}
+
+  /* ---------- Log page ---------- */
+  .log-list{display:flex; flex-direction:column; gap:8px; margin-bottom:90px;}
+  .log-row{
+    display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border-radius:var(--radius-md);
+    animation:logIn .45s var(--spring-soft);
+  }
+  @keyframes logIn{from{opacity:0; transform:translateX(-14px)} to{opacity:1; transform:translateX(0)}}
+  .log-ico{width:34px; height:34px; border-radius:11px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:15px;}
+  .log-ico.add{background:rgba(62,224,139,0.14); color:var(--ok);}
+  .log-ico.edit{background:rgba(255,171,31,0.14); color:var(--purple);}
+  .log-ico.del{background:rgba(255,84,112,0.14); color:var(--danger);}
+  .log-ico.sys{background:rgba(255,207,77,0.14); color:var(--gold);}
+  .log-body b{font-size:13.5px; display:block;}
+  .log-body span{font-size:11.5px; color:var(--text-faint);}
+
+  /* ---------- Bottom tab bar ---------- */
+  .tabbar{
+    position:fixed; bottom:14px; left:50%; transform:translateX(-50%); z-index:100;
+    display:flex; gap:4px; padding:8px; border-radius:26px;
+  }
+  .tab-btn{
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    padding:9px 20px; border:none; background:none; color:var(--text-faint);
+    border-radius:18px; font-size:10.5px; transition:all .35s var(--spring);
+  }
+  .tab-btn .ic{font-size:18px;}
+  .tab-btn.active{background:var(--glass-strong); color:var(--text);}
+  .tab-btn.active .ic{transform:translateY(-1px);}
+
+  /* ---------- Undo snackbar ---------- */
+  #snackbar{
+    position:fixed; left:50%; bottom:96px; transform:translateX(-50%) translateY(20px);
+    z-index:400; display:flex; align-items:center; gap:14px;
+    padding:12px 12px 12px 18px; border-radius:999px;
+    background:#151018; border:1px solid var(--glass-border);
+    box-shadow:0 16px 40px rgba(0,0,0,0.5);
+    opacity:0; pointer-events:none; transition:opacity .4s var(--spring), transform .4s var(--spring);
+  }
+  #snackbar.show{opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto;}
+  #snackbar span{font-size:13px;}
+  #snackbar button{
+    background:var(--glass-strong); border:none; color:var(--pink-soft); font-weight:700; font-size:12.5px;
+    padding:8px 14px; border-radius:999px;
+  }
+
+  /* ---------- toast (top notification, separate from island for longer msgs) ---------- */
+  @media (max-width:480px){
+    .stat-grid{grid-template-columns:repeat(3,1fr); gap:8px;}
+    .stat-card{padding:12px 8px;}
+    .stat-card .num{font-size:19px;}
+    #app{padding-top:70px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms !important; transition-duration:.01ms !important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div id="island">
+  <div class="dot"></div>
+  <div class="clock" id="clockTxt">--:--</div>
+  <div class="txt" id="islandTxt"></div>
+</div>
+
+<!-- ===== AUTH / MODE SELECT ===== -->
+<div id="auth">
+  <div class="auth-card glass" id="modeCard">
+    <div class="logo-mark">GG</div>
+    <h1>GAGA Recipe Book</h1>
+    <p>สมุดสูตรน้ำกาก้าประจำร้าน — เลือกโหมดเข้าใช้งาน</p>
+    <button class="mode-btn admin" onclick="chooseMode('admin')">
+      <div class="mode-ico">👑</div>
+      <div><b>เจ้าของร้าน</b><span>จัดการ/แก้ไข/ลบสูตรได้ • ต้องใส่รหัสผ่าน 🔒</span></div>
+    </button>
+    <button class="mode-btn staff" onclick="chooseMode('staff')">
+      <div class="mode-ico">👀</div>
+      <div><b>พนักงาน</b><span>ดูสูตรและเช็คลิสต์เปิดร้าน (ดูอย่างเดียว)</span></div>
+    </button>
+  </div>
+
+  <div class="auth-card glass" id="pinCard" style="display:none;">
+    <div class="logo-mark">🔒</div>
+    <h1>รหัสผ่านเจ้าของร้าน</h1>
+    <p>กรอกรหัส PIN เพื่อเข้าสู่โหมดเจ้าของร้าน</p>
+    <input type="password" inputmode="numeric" autocomplete="off" maxlength="8" class="input-field"
+      id="pinInput" placeholder="••••"
+      style="text-align:center; letter-spacing:8px; font-size:20px; margin-bottom:10px;"
+      onkeydown="if(event.key==='Enter') verifyPin();">
+    <div id="pinError" style="color:var(--danger); font-size:12.5px; min-height:18px; margin-bottom:6px;"></div>
+    <button class="btn-primary" style="width:100%; margin-bottom:10px;" onclick="verifyPin()">ยืนยันรหัสผ่าน</button>
+    <button class="ghost-btn" style="width:100%;" onclick="backToModeSelect()">ย้อนกลับ</button>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app">
+  <div class="topbar glass">
+    <div class="brand">
+      <div class="mark">GG</div>
+      <b>GAGA</b>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="badge admin admin-only" id="roleBadgeAdmin">👑 เจ้าของร้าน</div>
+      <div class="badge staff staff-hide" id="roleBadgeStaff">🧋 พนักงาน</div>
+      <button class="icon-btn admin-only" onclick="openSettings()" title="ตั้งค่ารหัสผ่าน">⚙️</button>
+      <button class="switch-mode" onclick="logout()">สลับโหมด</button>
+    </div>
+  </div>
+
+  <!-- PAGE: เปิดร้าน -->
+  <section class="page active" id="page-open">
+    <div class="hero-card glass">
+      <div class="greet" id="greetTxt">สวัสดีตอนเช้า ☀️</div>
+      <h2>เตรียมเปิดร้าน GAGA</h2>
+      <div class="date" id="dateTxt">-</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card glass"><div class="num" id="statRecipes">0</div><div class="lbl">สูตรทั้งหมด</div></div>
+      <div class="stat-card glass"><div class="num" id="statDone">0%</div><div class="lbl">เช็คลิสต์วันนี้</div></div>
+      <div class="stat-card glass"><div class="num" id="statLogs">0</div><div class="lbl">กิจกรรมวันนี้</div></div>
+    </div>
+
+    <div class="section-title">เช็คลิสต์เปิดร้าน <small>แตะเพื่อทำเครื่องหมาย</small></div>
+    <div class="checklist glass" id="checklistEl"></div>
+
+    <div class="admin-only" style="display:flex; gap:10px; margin-bottom:20px;">
+      <button class="ghost-btn" onclick="resetChecklist()">🔄 รีเซ็ตเช็คลิสต์วันใหม่</button>
+      <button class="ghost-btn danger" onclick="clearLogs()">🗑 ล้างประวัติ Log</button>
+    </div>
+  </section>
+
+  <!-- PAGE: สูตรเมนู -->
+  <section class="page" id="page-recipes">
+    <div class="section-title">สูตรเมนู <small id="recipeCountTxt">0 สูตร</small></div>
+    <div class="searchbar glass">
+      <span>🔍</span>
+      <input type="text" id="searchInput" placeholder="ค้นหาชื่อเมนู..." oninput="renderRecipes()">
+    </div>
+    <div class="chip-row" id="categoryChips"></div>
+    <div class="recipe-grid" id="recipeGrid"></div>
+  </section>
+
+  <!-- PAGE: LOG -->
+  <section class="page" id="page-log">
+    <div class="section-title">ประวัติกิจกรรม <small>Log แจ้งเตือน</small></div>
+    <div class="log-list" id="logList"></div>
+  </section>
+</div>
+
+<button class="fab" id="fabAdd" onclick="openEditor()">+</button>
+
+<div class="tabbar glass">
+  <button class="tab-btn active" data-page="open" onclick="showPage('open')">
+    <span class="ic">🏪</span>เปิดร้าน
+  </button>
+  <button class="tab-btn" data-page="recipes" onclick="showPage('recipes')">
+    <span class="ic">📖</span>สูตรเมนู
+  </button>
+  <button class="tab-btn" data-page="log" onclick="showPage('log')">
+    <span class="ic">🔔</span>Log
+  </button>
+</div>
+
+<!-- Undo snackbar -->
+<div id="snackbar">
+  <span id="snackbarTxt">ลบสูตรแล้ว</span>
+  <button onclick="undoDelete()">เลิกทำ</button>
+</div>
+
+<!-- Editor overlay -->
+<div id="editorOverlay">
+  <div class="editor-sheet glass-strong" id="editorSheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-top">
+      <h2 id="editorTitle">สูตรใหม่</h2>
+      <button class="icon-btn" onclick="closeEditor()">✕</button>
+    </div>
+
+    <div class="field-label">1. ชื่อเมนู</div>
+    <input type="text" class="input-field" id="fieldName" placeholder="เช่น กาก้าองุ่นโซดา" oninput="scheduleSave()">
+
+    <div class="field-label">หมวดหมู่</div>
+    <div class="chip-row" id="categoryPicker"></div>
+
+    <div class="field-label">2. วัตถุดิบ</div>
+    <div class="row-list" id="ingList"></div>
+    <button class="add-row-btn" onclick="addIngredient()">+ เพิ่มวัตถุดิบ</button>
+
+    <div class="field-label">3. วิธีทำ</div>
+    <div class="row-list" id="stepList"></div>
+    <button class="add-row-btn" onclick="addStep()">+ เพิ่มขั้นตอน</button>
+
+    <div class="autosave-row">
+      <div class="sdot" id="saveDot"></div>
+      <span id="saveTxt">พร้อมบันทึกอัตโนมัติ</span>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn-delete admin-only" id="btnDeleteRecipe" onclick="deleteCurrentRecipe()">ลบสูตรนี้</button>
+      <button class="btn-primary" id="btnPrimary" onclick="closeEditor()">เสร็จสิ้น</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings overlay (change PIN) -->
+<div id="settingsOverlay">
+  <div class="editor-sheet glass-strong" style="max-width:420px;">
+    <div class="sheet-handle"></div>
+    <div class="sheet-top">
+      <h2>ตั้งค่ารหัสผ่าน</h2>
+      <button class="icon-btn" onclick="closeSettings()">✕</button>
+    </div>
+
+    <div class="field-label">รหัสผ่านปัจจุบัน</div>
+    <input type="password" inputmode="numeric" class="input-field" id="curPinField" placeholder="••••">
+
+    <div class="field-label">รหัสผ่านใหม่</div>
+    <input type="password" inputmode="numeric" class="input-field" id="newPinField" placeholder="อย่างน้อย 4 หลัก">
+
+    <div class="field-label">ยืนยันรหัสผ่านใหม่</div>
+    <input type="password" inputmode="numeric" class="input-field" id="confirmPinField" placeholder="พิมพ์ซ้ำอีกครั้ง">
+
+    <div id="settingsError" style="color:var(--danger); font-size:12.5px; min-height:18px; margin-top:10px;"></div>
+
+    <div class="sheet-actions">
+      <button class="btn-primary" onclick="saveNewPin()">บันทึกรหัสผ่านใหม่</button>
+    </div>
+    <p style="font-size:11px; color:var(--text-faint); margin-top:14px; line-height:1.6;">
+      ⚠️ รหัสผ่านนี้เก็บไว้ในหน่วยความจำของหน้าเว็บเท่านั้น หากปิดหรือรีเฟรชหน้าเว็บ ระบบจะกลับไปใช้รหัสเริ่มต้นอีกครั้ง
+    </p>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   STATE  (in-memory only — no localStorage, per environment)
+========================================================= */
+const state = {
+  mode: null,               // 'admin' | 'staff'
+  recipes: [],
+  logs: [],
+  checklist: [
+    {id:'c1', label:'เตรียมน้ำแข็งให้เพียงพอ', done:false},
+    {id:'c2', label:'เช็คแก๊ส / เครื่องอัดโซดา', done:false},
+    {id:'c3', label:'เช็คไซรัปกาก้าให้ครบทุกรส', done:false},
+    {id:'c4', label:'เตรียมแก้วและหลอดหน้าร้าน', done:false},
+    {id:'c5', label:'เปิดตู้แช่เย็น / ตรวจอุณหภูมิ', done:false},
+    {id:'c6', label:'นับเงินทอนหน้าร้าน', done:false},
+    {id:'c7', label:'เปิดป้ายไฟหน้าร้าน', done:false},
+  ],
+  editingId: null,
+  lastDeleted: null,
+  saveTimer: null,
+  categoryFilter: 'ทั้งหมด',
+};
+
+const CATEGORY_LIST = ['โซดา','ชานม','ปั่น','ท็อปปิ้ง','เมนูพิเศษ'];
+
+let idSeq = 1;
+const genId = () => 'r' + (idSeq++) + '_' + Date.now().toString(36);
+
+/* seed demo recipes so the book isn't empty on first run */
+function seed(){
+  state.recipes.push({
+    id: genId(),
+    name: 'กาก้าองุ่นโซดา',
+    category: 'โซดา',
+    ingredients: ['ไซรัปองุ่น 30 มล.','โซดา 200 มล.','น้ำแข็ง 1 แก้ว','องุ่นสดตกแต่ง 2-3 ลูก'],
+    steps: ['ใส่น้ำแข็งลงแก้วให้เต็ม','เทไซรัปองุ่นลงไป','เติมโซดาเย็นจัดให้เต็มแก้ว','คนเบาๆ แล้วตกแต่งด้วยองุ่นสด'],
+    updatedAt: Date.now()
+  });
+  state.recipes.push({
+    id: genId(),
+    name: 'กาก้าบลูฮาวาย',
+    category: 'โซดา',
+    ingredients: ['ไซรัปบลูฮาวาย 30 มล.','โซดา 200 มล.','น้ำแข็ง 1 แก้ว'],
+    steps: ['ใส่น้ำแข็งลงแก้ว','เทไซรัปบลูฮาวาย','เติมโซดาให้เต็มแก้วแล้วคนเบาๆ'],
+    updatedAt: Date.now()
+  });
+  state.recipes.push({
+    id: genId(),
+    name: 'ชานมไข่มุกกาก้า',
+    category: 'ชานม',
+    ingredients: ['ชานม 200 มล.','ไข่มุก 50 กรัม','น้ำแข็ง 1 แก้ว','ครีมนมสด 20 มล.'],
+    steps: ['ต้มไข่มุกให้สุกนุ่ม แล้วแช่น้ำเชื่อม','ใส่น้ำแข็งและไข่มุกลงแก้ว','เทชานมให้เต็มแก้ว','ปิดท้ายด้วยครีมนมสดด้านบน'],
+    updatedAt: Date.now()
+  });
+  state.recipes.push({
+    id: genId(),
+    name: 'กาก้าปั่นช็อกโกแลต',
+    category: 'ปั่น',
+    ingredients: ['ผงช็อกโกแลต 40 กรัม','นมสด 150 มล.','น้ำแข็ง 1 ถ้วย','วิปครีม 20 กรัม'],
+    steps: ['ใส่ผงช็อกโกแลต นมสด และน้ำแข็งลงเครื่องปั่น','ปั่นจนเนียนละเอียด','เทใส่แก้วแล้วบีบวิปครีมด้านบน'],
+    updatedAt: Date.now()
+  });
+  addLog('sys','เริ่มระบบ','โหลดสูตรตัวอย่าง 4 สูตรเรียบร้อย');
+}
+seed();
+
+/* =========================================================
+   CLOCK + GREETING
+========================================================= */
+function updateClock(){
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('clockTxt').textContent = `${hh}:${mm}`;
+  const h = now.getHours();
+  const greet = h < 11 ? 'สวัสดีตอนเช้า ☀️' : h < 17 ? 'สวัสดีตอนบ่าย 🌤' : 'สวัสดีตอนเย็น 🌙';
+  const g = document.getElementById('greetTxt');
+  if(g) g.textContent = greet;
+  const d = document.getElementById('dateTxt');
+  if(d) d.textContent = now.toLocaleDateString('th-TH', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+}
+updateClock();
+setInterval(updateClock, 15000);
+
+/* =========================================================
+   DYNAMIC ISLAND
+========================================================= */
+let islandTimer = null;
+function islandShow(text, kind, ms=1600){
+  const el = document.getElementById('island');
+  const txt = document.getElementById('islandTxt');
+  el.classList.remove('saving','saved','notify');
+  if(kind) el.classList.add(kind);
+  txt.textContent = text;
+  el.classList.add('expand');
+  clearTimeout(islandTimer);
+  islandTimer = setTimeout(()=>{
+    el.classList.remove('expand','saving','saved','notify');
+  }, ms);
+}
+
+/* =========================================================
+   LOGIN / LOGOUT
+   NOTE: ADMIN_PIN is checked client-side only — fine for a
+   single-shop front-of-house deterrent, but anyone reading the
+   page source can see it. Change it below before real use.
+========================================================= */
+let ADMIN_PIN = '1234';
+let pinAttempts = 0;
+
+function chooseMode(mode){
+  if(mode === 'staff'){
+    login('staff');
+    return;
+  }
+  document.getElementById('modeCard').style.display = 'none';
+  document.getElementById('pinCard').style.display = 'block';
+  document.getElementById('pinInput').value = '';
+  document.getElementById('pinError').textContent = '';
+  setTimeout(()=>document.getElementById('pinInput').focus(), 280);
+}
+function backToModeSelect(){
+  document.getElementById('pinCard').style.display = 'none';
+  document.getElementById('modeCard').style.display = 'block';
+}
+function verifyPin(){
+  const val = document.getElementById('pinInput').value.trim();
+  if(val === ADMIN_PIN){
+    pinAttempts = 0;
+    login('admin');
+    return;
+  }
+  pinAttempts++;
+  document.getElementById('pinError').textContent = 'รหัสผ่านไม่ถูกต้อง ลองใหม่อีกครั้ง';
+  const card = document.getElementById('pinCard');
+  card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+  document.getElementById('pinInput').value = '';
+  document.getElementById('pinInput').focus();
+  if(pinAttempts >= 3){
+    addLog('sys','พยายามเข้าโหมดเจ้าของร้านผิดซ้ำ','ใส่รหัสผ่านผิด 3 ครั้งติดกัน');
+  }
+}
+function login(mode){
+  state.mode = mode;
+  document.body.classList.remove('role-admin','role-staff');
+  document.body.classList.add('role-' + mode);
+  document.getElementById('auth').classList.add('hide');
+  document.getElementById('app').classList.add('show');
+  islandShow(mode === 'admin' ? 'เข้าสู่ระบบเจ้าของร้าน' : 'เข้าสู่ระบบพนักงาน', 'notify');
+  addLog('sys', mode === 'admin' ? 'เจ้าของร้านเข้าสู่ระบบ' : 'พนักงานเข้าสู่ระบบ', 'สลับเป็นโหมด ' + (mode==='admin'?'Admin (แก้ไขได้)':'Staff (ดูอย่างเดียว)'));
+  renderAll();
+  showPage('open');
+}
+function logout(){
+  document.getElementById('auth').classList.remove('hide');
+  document.getElementById('app').classList.remove('show');
+  backToModeSelect();
+}
+
+/* =========================================================
+   SETTINGS — change admin PIN
+========================================================= */
+function openSettings(){
+  if(state.mode !== 'admin') return;
+  document.getElementById('curPinField').value = '';
+  document.getElementById('newPinField').value = '';
+  document.getElementById('confirmPinField').value = '';
+  document.getElementById('settingsError').textContent = '';
+  document.getElementById('settingsOverlay').classList.add('open');
+}
+function closeSettings(){
+  document.getElementById('settingsOverlay').classList.remove('open');
+}
+function saveNewPin(){
+  const cur = document.getElementById('curPinField').value.trim();
+  const next = document.getElementById('newPinField').value.trim();
+  const confirm = document.getElementById('confirmPinField').value.trim();
+  const errEl = document.getElementById('settingsError');
+
+  if(cur !== ADMIN_PIN){
+    errEl.textContent = 'รหัสผ่านปัจจุบันไม่ถูกต้อง';
+    return;
+  }
+  if(next.length < 4){
+    errEl.textContent = 'รหัสผ่านใหม่ต้องมีอย่างน้อย 4 หลัก';
+    return;
+  }
+  if(next !== confirm){
+    errEl.textContent = 'รหัสผ่านใหม่และการยืนยันไม่ตรงกัน';
+    return;
+  }
+  ADMIN_PIN = next;
+  closeSettings();
+  islandShow('เปลี่ยนรหัสผ่านแล้ว ✓', 'saved');
+  addLog('sys','เปลี่ยนรหัสผ่านเจ้าของร้าน','อัปเดตรหัส PIN ใหม่เรียบร้อย');
+}
+
+/* =========================================================
+   CHECKLIST
+========================================================= */
+function renderChecklist(){
+  const wrap = document.getElementById('checklistEl');
+  wrap.innerHTML = '';
+  state.checklist.forEach(item=>{
+    const row = document.createElement('div');
+    row.className = 'check-item' + (item.done ? ' done' : '');
+    row.innerHTML = `
+      <div class="checkbox ${item.done?'done':''}" onclick="toggleCheck('${item.id}')">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 7" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="clabel">${item.label}</div>
+    `;
+    wrap.appendChild(row);
+  });
+  updateStats();
+}
+function toggleCheck(id){
+  const item = state.checklist.find(c=>c.id===id);
+  item.done = !item.done;
+  renderChecklist();
+  if(item.done){
+    islandShow('เช็คแล้ว ✓', 'saved', 1000);
+  }
+}
+function resetChecklist(){
+  if(state.mode !== 'admin') return;
+  state.checklist.forEach(c=>c.done=false);
+  renderChecklist();
+  addLog('sys','รีเซ็ตเช็คลิสต์','เริ่มวันใหม่ — ล้างสถานะเช็คลิสต์ทั้งหมด');
+  islandShow('รีเซ็ตเช็คลิสต์แล้ว', 'notify');
+}
+
+/* =========================================================
+   STATS
+========================================================= */
+function updateStats(){
+  document.getElementById('statRecipes').textContent = state.recipes.length;
+  const doneCount = state.checklist.filter(c=>c.done).length;
+  const pct = Math.round((doneCount / state.checklist.length) * 100);
+  document.getElementById('statDone').textContent = pct + '%';
+  const todayStr = new Date().toDateString();
+  const todayLogs = state.logs.filter(l => new Date(l.time).toDateString() === todayStr).length;
+  document.getElementById('statLogs').textContent = todayLogs;
+  document.getElementById('recipeCountTxt').textContent = state.recipes.length + ' สูตร';
+}
+
+/* =========================================================
+   PAGE NAV
+========================================================= */
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.page === name));
+  document.getElementById('fabAdd').style.display = (name === 'recipes' && state.mode === 'admin') ? 'flex' : 'none';
+}
+
+/* =========================================================
+   RECIPES — RENDER
+========================================================= */
+function renderCategoryChips(){
+  const wrap = document.getElementById('categoryChips');
+  const all = ['ทั้งหมด', ...CATEGORY_LIST];
+  wrap.innerHTML = all.map(cat => `
+    <button class="chip ${state.categoryFilter === cat ? 'active' : ''}" onclick="setCategoryFilter('${cat}')">${cat}</button>
+  `).join('');
+}
+function setCategoryFilter(cat){
+  state.categoryFilter = cat;
+  renderCategoryChips();
+  renderRecipes();
+}
+function renderRecipes(){
+  const grid = document.getElementById('recipeGrid');
+  const q = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+  const list = state.recipes.filter(r =>
+    r.name.toLowerCase().includes(q) &&
+    (state.categoryFilter === 'ทั้งหมด' || r.category === state.categoryFilter)
+  );
+  grid.innerHTML = '';
+  if(list.length === 0){
+    grid.innerHTML = `<div class="empty-state glass"><span class="emo">🧊</span>ยังไม่มีสูตรที่ตรงกับคำค้นหา<br>ลองแตะ + เพื่อเพิ่มสูตรใหม่</div>`;
+    return;
+  }
+  list.forEach(r=>{
+    const card = document.createElement('div');
+    card.className = 'recipe-card glass';
+    card.onclick = () => openEditor(r.id);
+    card.innerHTML = `
+      <div class="cat-pill">${escapeHtml(r.category || 'ไม่มีหมวดหมู่')}</div>
+      <h3>${escapeHtml(r.name) || 'ยังไม่ตั้งชื่อ'}</h3>
+      <div class="recipe-meta">
+        <span>🧪 ${r.ingredients.filter(Boolean).length} วัตถุดิบ</span>
+        <span>📝 ${r.steps.filter(Boolean).length} ขั้นตอน</span>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+/* =========================================================
+   EDITOR
+========================================================= */
+function openEditor(id){
+  const isAdmin = state.mode === 'admin';
+  if(!id && !isAdmin) return; // staff cannot create new recipes
+
+  state.editingId = id || null;
+  const overlay = document.getElementById('editorOverlay');
+  const sheet = document.getElementById('editorSheet');
+  const title = document.getElementById('editorTitle');
+  const delBtn = document.getElementById('btnDeleteRecipe');
+  const primaryBtn = document.getElementById('btnPrimary');
+  const readOnly = !isAdmin;
+  sheet.classList.toggle('readonly-mode', readOnly);
+
+  let recipe;
+  if(id){
+    recipe = state.recipes.find(r=>r.id===id);
+    title.textContent = readOnly ? 'ดูสูตร' : 'แก้ไขสูตร';
+    delBtn.style.display = readOnly ? 'none' : 'block';
+  } else {
+    recipe = {id: genId(), name:'', category: CATEGORY_LIST[0], ingredients:[''], steps:[''], updatedAt: Date.now()};
+    state.recipes.unshift(recipe);
+    state.editingId = recipe.id;
+    title.textContent = 'สูตรใหม่';
+    delBtn.style.display = 'none';
+  }
+
+  const nameField = document.getElementById('fieldName');
+  nameField.value = recipe.name;
+  nameField.readOnly = readOnly;
+  renderCategoryPicker(recipe.category, readOnly);
+  renderRows('ingList', recipe.ingredients, 'ingredients', false, readOnly);
+  renderRows('stepList', recipe.steps, 'steps', true, readOnly);
+  document.getElementById('saveTxt').textContent = readOnly ? 'โหมดพนักงาน • ดูได้อย่างเดียว' : 'พร้อมบันทึกอัตโนมัติ';
+  primaryBtn.textContent = readOnly ? 'ปิด' : 'เสร็จสิ้น';
+
+  overlay.classList.add('open');
+}
+function closeEditor(){
+  // clean up empty un-named draft recipes
+  const r = state.recipes.find(x=>x.id===state.editingId);
+  if(r && !r.name.trim() && r.ingredients.every(i=>!i.trim()) && r.steps.every(s=>!s.trim())){
+    state.recipes = state.recipes.filter(x=>x.id!==r.id);
+  }
+  document.getElementById('editorOverlay').classList.remove('open');
+  state.editingId = null;
+  renderRecipes();
+  updateStats();
+}
+
+function renderCategoryPicker(current, readOnly){
+  const wrap = document.getElementById('categoryPicker');
+  wrap.innerHTML = CATEGORY_LIST.map(cat => `
+    <button class="chip ${cat === current ? 'active' : ''}" ${readOnly ? 'disabled style="opacity:.6;"' : `onclick="selectCategory('${cat}')"`}>${cat}</button>
+  `).join('');
+}
+function selectCategory(cat){
+  if(state.mode !== 'admin') return;
+  const r = currentRecipe();
+  if(!r) return;
+  r.category = cat;
+  renderCategoryPicker(cat, false);
+  scheduleSave(true);
+}
+function renderRows(containerId, arr, key, numbered, readOnly){
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = '';
+  arr.forEach((val, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'row-item';
+    row.innerHTML = `
+      ${numbered ? `<div class="step-num">${idx+1}</div>` : ''}
+      <input type="text" class="input-field" value="${escapeHtml(val)}" placeholder="${numbered ? 'อธิบายขั้นตอนที่ '+(idx+1) : 'เช่น ไซรัปองุ่น 30 มล.'}"
+        ${readOnly ? 'readonly' : `oninput="updateRowValue('${key}', ${idx}, this.value)"`}>
+      ${readOnly ? '' : `<button class="row-del" onclick="removeRow('${key}', ${idx})">✕</button>`}
+    `;
+    wrap.appendChild(row);
+  });
+}
+function currentRecipe(){ return state.recipes.find(r=>r.id===state.editingId); }
+
+function addIngredient(){
+  if(state.mode !== 'admin') return;
+  const r = currentRecipe(); r.ingredients.push('');
+  renderRows('ingList', r.ingredients, 'ingredients', false);
+  scheduleSave(true);
+}
+function addStep(){
+  if(state.mode !== 'admin') return;
+  const r = currentRecipe(); r.steps.push('');
+  renderRows('stepList', r.steps, 'steps', true);
+  scheduleSave(true);
+}
+function updateRowValue(key, idx, val){
+  if(state.mode !== 'admin') return;
+  const r = currentRecipe(); r[key][idx] = val;
+  scheduleSave();
+}
+function removeRow(key, idx){
+  if(state.mode !== 'admin') return;
+  const r = currentRecipe();
+  r[key].splice(idx,1);
+  if(r[key].length === 0) r[key].push('');
+  renderRows(key==='ingredients'?'ingList':'stepList', r[key], key, key==='steps');
+  scheduleSave(true);
+}
+
+/* Autosave: fires on every keystroke, debounced commit + island feedback */
+function scheduleSave(instant){
+  if(state.mode !== 'admin') return;
+  const r = currentRecipe();
+  if(!r) return;
+  const nameEl = document.getElementById('fieldName');
+  r.name = nameEl.value;
+  r.updatedAt = Date.now();
+
+  document.getElementById('saveDot').style.opacity = '0.3';
+  document.getElementById('saveTxt').textContent = 'กำลังพิมพ์...';
+  islandShow('กำลังบันทึก…', 'saving', 2200);
+
+  clearTimeout(state.saveTimer);
+  const delay = instant ? 150 : 700;
+  state.saveTimer = setTimeout(()=>{
+    document.getElementById('saveDot').style.opacity = '1';
+    document.getElementById('saveTxt').textContent = 'บันทึกอัตโนมัติแล้ว • ' + new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+    islandShow('บันทึกแล้ว ✓', 'saved', 1200);
+    renderRecipes();
+    updateStats();
+    if(!r._logged){
+      addLog('add', 'เพิ่มสูตรใหม่', r.name || 'ยังไม่ตั้งชื่อ');
+      r._logged = true;
+    } else {
+      addLog('edit', 'แก้ไขสูตร', r.name || 'ยังไม่ตั้งชื่อ');
+    }
+  }, delay);
+}
+
+/* =========================================================
+   DELETE + UNDO
+========================================================= */
+function deleteCurrentRecipe(){
+  if(state.mode !== 'admin') return;
+  const r = currentRecipe();
+  if(!r) return;
+  const idx = state.recipes.findIndex(x=>x.id===r.id);
+  state.lastDeleted = {recipe: r, index: idx};
+  state.recipes.splice(idx,1);
+  document.getElementById('editorOverlay').classList.remove('open');
+  state.editingId = null;
+  renderRecipes();
+  updateStats();
+  addLog('del','ลบสูตร', r.name || 'ไม่ทราบชื่อ');
+  showSnackbar(`ลบสูตร "${r.name || 'ไม่ทราบชื่อ'}" แล้ว`);
+}
+function showSnackbar(msg){
+  document.getElementById('snackbarTxt').textContent = msg;
+  const bar = document.getElementById('snackbar');
+  bar.classList.add('show');
+  clearTimeout(bar._t);
+  bar._t = setTimeout(()=>{ bar.classList.remove('show'); state.lastDeleted=null; }, 6000);
+}
+function undoDelete(){
+  if(!state.lastDeleted) return;
+  const {recipe, index} = state.lastDeleted;
+  state.recipes.splice(Math.min(index, state.recipes.length), 0, recipe);
+  state.lastDeleted = null;
+  document.getElementById('snackbar').classList.remove('show');
+  renderRecipes();
+  updateStats();
+  addLog('sys','เลิกทำการลบ', recipe.name || 'ไม่ทราบชื่อ');
+  islandShow('เรียกคืนสูตรแล้ว', 'notify');
+}
+
+/* =========================================================
+   LOG
+========================================================= */
+function addLog(type, title, detail){
+  state.logs.unshift({id:'l'+Date.now()+Math.random().toString(36).slice(2,6), type, title, detail, time: Date.now()});
+  renderLogs();
+  updateStats();
+}
+function clearLogs(){
+  if(state.mode !== 'admin') return;
+  state.logs = [];
+  renderLogs();
+  updateStats();
+  islandShow('ล้างประวัติ Log แล้ว', 'notify');
+}
+function iconFor(type){
+  return {add:'✅', edit:'✏️', del:'🗑️', sys:'⚙️'}[type] || '🔔';
+}
+function renderLogs(){
+  const wrap = document.getElementById('logList');
+  wrap.innerHTML = '';
+  if(state.logs.length === 0){
+    wrap.innerHTML = `<div class="empty-state glass"><span class="emo">🔕</span>ยังไม่มีกิจกรรม</div>`;
+    return;
+  }
+  state.logs.forEach(l=>{
+    const row = document.createElement('div');
+    row.className = 'log-row glass';
+    const time = new Date(l.time).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+    row.innerHTML = `
+      <div class="log-ico ${l.type}">${iconFor(l.type)}</div>
+      <div class="log-body">
+        <b>${escapeHtml(l.title)}</b>
+        <span>${escapeHtml(l.detail)} • ${time}</span>
+      </div>
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+function renderAll(){
+  renderChecklist();
+  renderCategoryChips();
+  renderRecipes();
+  renderLogs();
+  updateStats();
+}
+</script>
+</body>
+</html>
