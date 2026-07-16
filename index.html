@@ -175,7 +175,7 @@
   .addbtn:active{transform:scale(0.9);}
   .addbtn svg{width:18px; height:18px;}
 
-  .chips{display:flex; gap:8px; overflow-x:auto; padding:2px 2px 4px; margin-bottom:22px; scrollbar-width:none;}
+  .chips{display:flex; gap:8px; overflow-x:auto; padding:2px 2px 4px; margin-bottom:22px; scrollbar-width:none; align-items:center;}
   .chips::-webkit-scrollbar{display:none;}
   .chip{
     flex-shrink:0; padding:9px 18px; border-radius:999px; border:1px solid var(--line);
@@ -197,7 +197,7 @@
 
   .recipe-card{
     border-radius:var(--radius-lg); padding:16px; cursor:pointer;
-    transition:transform .28s cubic-bezier(.2,.8,.2,1), box-shadow .28s ease;
+    transition:transform .28s cubic-bezier(.2,.8,.2,1), box-shadow .28s ease, border-color .2s;
     position:relative; overflow:hidden; display:flex; flex-direction:column;
   }
   .recipe-card:hover{transform:translateY(-4px); box-shadow:var(--shadow-lift);}
@@ -210,12 +210,19 @@
   .card-icon.cat-clear{background:rgba(110,155,111,0.16); color:var(--matcha);}
   .card-icon.cat-milk{background:rgba(184,115,58,0.16); color:var(--caramel-deep);}
   .card-icon.cat-topping{background:rgba(136,116,201,0.16); color:var(--taro);}
+  .card-icon.cat-sys{background:rgba(203,107,120,0.16); color:var(--berry);}
+  
   
   .card-name{font-size:14.5px; font-weight:500; line-height:1.35; margin-bottom:4px;}
   .card-tag{font-size:11px; color:var(--ink-soft); display:flex; align-items:center; gap:5px; flex-wrap:wrap;}
   .badge-new{
     position:absolute; top:12px; right:12px; font-size:10px; font-weight:600; color:#fff;
     background:var(--berry); padding:3px 9px; border-radius:999px;
+  }
+  .badge-sys{
+    font-size:11px; font-weight:600; color:#fff;
+    background:linear-gradient(145deg, var(--berry), #B0535F); padding:3px 10px; border-radius:8px;
+    box-shadow: 0 4px 10px rgba(203,107,120,0.25);
   }
 
   /* ปุ่มกดขายดีด่วน */
@@ -231,15 +238,29 @@
 
   .grid-list{display:flex; flex-direction:column; gap:10px;}
   .list-row{
-    display:flex; align-items:center; gap:14px; padding:12px 14px; border-radius:var(--radius-md); cursor:pointer;
-    transition:transform .2s ease, background .2s ease;
+    display:flex; align-items:center; gap:14px; padding:14px 16px; border-radius:var(--radius-md); cursor:pointer;
+    transition:transform .2s ease, background .2s ease, border-color .2s, box-shadow .2s;
   }
-  .list-row:hover{transform:translateX(3px);}
-  .list-row .card-icon{width:40px; height:40px; margin:0; border-radius:13px; font-size:18px; flex-shrink:0;}
+  .list-row:hover{transform:translateX(4px); box-shadow:var(--shadow-soft);}
+  .list-row .card-icon{width:44px; height:44px; margin:0; border-radius:14px; font-size:20px; flex-shrink:0;}
   .list-row .rowmain{flex:1; min-width:0;}
-  .list-row .rowmain .card-name{margin:0;}
+  .list-row .rowmain .card-name{margin:0; font-size:15px; font-weight:600;}
   .list-row .rowmeta{font-size:11.5px; color:var(--ink-faint); flex-shrink:0;}
-  .chev{width:16px; height:16px; color:var(--ink-faint); flex-shrink:0;}
+
+  /* --- MULTI-SELECT CHECKBOX --- */
+  .select-chk {
+    width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--ink-soft);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: all 0.2s; background: var(--glass-strong);
+  }
+  .select-chk.checked {
+    background: var(--berry); border-color: var(--berry); color: #fff;
+  }
+  .select-chk svg { width: 14px; height: 14px; opacity: 0; transition: opacity 0.2s; }
+  .select-chk.checked svg { opacity: 1; }
+  .recipe-card.selected, .list-row.selected {
+    border: 2px solid var(--berry); background: rgba(203,107,120,0.08);
+  }
 
   .empty{text-align:center; padding:50px 20px; color:var(--ink-soft);}
   .empty svg{width:44px; height:44px; margin-bottom:12px; opacity:.5;}
@@ -379,8 +400,8 @@
   .toast .dotstate{width:8px; height:8px; border-radius:50%; background:var(--matcha); flex-shrink:0;}
   .toast.warn .dotstate{background:var(--berry);}
 
-  /* ---------- UNDO SNACKBAR ---------- */
-  #undo-root{position:fixed; bottom:22px; left:50%; transform:translateX(-50%); z-index:200;}
+  /* ---------- UNDO & BATCH SNACKBAR ---------- */
+  #undo-root, #batch-root{position:fixed; bottom:22px; left:50%; transform:translateX(-50%); z-index:200;}
   .undobar{
     display:flex; align-items:center; gap:14px; padding:10px 12px 10px 18px; border-radius:999px;
     background:rgba(30,24,20,0.92); backdrop-filter:blur(14px); color:#fff; font-size:13.5px;
@@ -392,6 +413,7 @@
     border:none; background:rgba(255,255,255,0.14); color:#fff; padding:8px 16px; border-radius:999px; font-size:13px; font-weight:600;
     display:flex; align-items:center; gap:8px; cursor:pointer;
   }
+  .undobar button.btn-danger{background:var(--berry);}
   .ring{width:16px; height:16px; flex-shrink:0;}
   .ring circle{fill:none; stroke:rgba(255,255,255,0.9); stroke-width:2.4; stroke-linecap:round; transform-origin:center; transform:rotate(-90deg);}
 
@@ -462,21 +484,32 @@
     <button class="chip" data-cat="ชาใส">ชาใส</button>
     <button class="chip" data-cat="ชานม">ชานม</button>
     <button class="chip" data-cat="ท็อปปิ้ง">ท็อปปิ้ง</button>
+    <button class="chip" data-cat="พื้นฐาน">พื้นฐาน</button>
+    <button class="chip" id="toggleSelectBtn" style="margin-left:auto; border-color:var(--berry); color:var(--berry);">🗑️ ลบหลายรายการ</button>
   </div>
 
   <div id="view-dashboard" class="view">
+    <!-- 1. ดึงข้อมูลพื้นฐานที่ต้องรู้มาไว้บนสุด (ตามที่ขอ) -->
+    <section class="block" id="systemBlock">
+      <div class="block-head"><h2 style="color:var(--berry);">🔒 ข้อมูลพื้นฐานที่ต้องรู้</h2><span class="count" id="systemBlockCount"></span></div>
+      <div class="grid-list" id="systemList"></div>
+    </section>
+
+    <!-- 2. ขยับเมนูขายดีลงมาอยู่ด้านล่างแทน -->
     <section class="block" id="popularBlock">
       <div class="block-head"><h2>🔥 เมนูขายดี</h2></div>
       <div class="hscroll" id="popularRow"></div>
     </section>
 
+    <!-- 3. อัปเดตล่าสุด -->
     <section class="block" id="recentBlock">
       <div class="block-head"><h2>✨ อัปเดตล่าสุด</h2></div>
       <div class="grid-list" id="recentList"></div>
     </section>
 
+    <!-- 4. สูตรเมนูทั่วไปทั้งหมด (แยกระบบออกไปแล้วไม่ให้ซ้ำซ้อน) -->
     <section class="block" id="allBlock">
-      <div class="block-head"><h2 id="allBlockTitle">สูตรทั้งหมด</h2><span class="count" id="allBlockCount"></span></div>
+      <div class="block-head"><h2 id="allBlockTitle">สูตรเมนูทั่วไปทั้งหมด</h2><span class="count" id="allBlockCount"></span></div>
       <div class="grid-list" id="allList"></div>
     </section>
   </div>
@@ -542,6 +575,7 @@
           <option value="ชาใส">ชาใส</option>
           <option value="ชานม">ชานม</option>
           <option value="ท็อปปิ้ง">ท็อปปิ้ง</option>
+          <option value="พื้นฐาน">พื้นฐาน</option>
         </select>
       </div>
       <div class="field" style="display: flex; align-items: center; gap: 8px; margin-top: 12px;">
@@ -571,6 +605,7 @@
 
 <div id="toast-root"></div>
 <div id="undo-root"></div>
+<div id="batch-root"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -592,6 +627,55 @@ const db = getFirestore(fbApp);
 const recipesCol = collection(db, "recipes");
 
 (function(){
+
+  /* ============ SYSTEM RECIPES (แก้ไขได้ในโค้ดเท่านั้น - เพิ่มสารก่อภูมิแพ้ให้แล้ว) ============ */
+  const SYSTEM_RECIPES = [
+    {
+      id: 'sys_3', name: '⚠️ ข้อมูลสารก่อภูมิแพ้ในเครื่องดื่ม (อ่านก่อนทำ!)', category: 'พื้นฐาน',
+      popular: false, updatedAt: Date.now(), icon: '🚨', isSystem: true,
+      ingredients: [
+        {name: 'นมวัว (Dairy Products)', amt: 1, unit: 'รายการ'},
+        {name: 'ถั่วเหลือง (Soy)', amt: 1, unit: 'รายการ'},
+        {name: 'กลูเตน / แป้งสาลี (Gluten)', amt: 1, unit: 'รายการ'}
+      ],
+      steps: [
+        {text: '📍 กลุ่มชานม / นมสดทุกเมนู: มีส่วนผสมของ "นมวัว" (หากลูกค้าแพ้ แนะนำเสนอเปลี่ยนเป็นนมโอ๊ต)'},
+        {text: '📍 ท็อปปิ้งพุดดิ้ง / มุกบราวน์ชูการ์: อาจมีส่วนผสมของ "ถั่วเหลือง" และ "เลซิทิน"'},
+        {text: '📍 เมนูมอลต์ / คุกกี้แอนด์ครีม: มีส่วนผสมของ "กลูเตน" จากแป้งสาลี'},
+        {text: '⚡ ข้อปฏิบัติสำคัญ: หากลูกค้าแจ้งแพ้อาหารระดับรุนแรง ต้องล้างอุปกรณ์ชงและแก้วตวงใหม่ทั้งหมดก่อนทำออเดอร์นั้นเสมอ!'}
+      ]
+    },
+    {
+      id: 'sys_1', name: 'วิธีเปิดร้าน', category: 'พื้นฐาน',
+      popular: false, updatedAt: Date.now(), icon: '🔮', isSystem: true,
+      ingredients: [
+        {name: 'รอกรอกข้อมูล', amt: 0, unit: 'g'},
+        {name: 'รอกรอกข้อมูล', amt: 0, unit: 'ml'},
+        {name: 'รอกรอกข้อมูล', amt: 0, unit: 'ml'}
+      ],
+      steps: [
+        {text: 'รอกรอกข้อมูล'},
+        {text: 'รอกรอกข้อมูล'},
+        {text: 'รอกรอกข้อมูล'},
+        {text: 'รอกรอกข้อมูล'},
+        {text: 'รอกรอกข้อมูล'}
+      ]
+    },
+    {
+      id: 'sys_2', name: 'รอกรอกข้อมูล', category: 'พื้นฐาน',
+      popular: false, updatedAt: Date.now(), icon: '🍵', isSystem: true,
+      ingredients: [
+        {name: 'รอกรอกข้อมูล', amt: 0, unit: 'g'},
+        {name: 'รอกรอกข้อมูล', amt: 0, unit: 'ml'}
+      ],
+      steps: [
+        {text: 'รอกรอกข้อมูล'},
+        {text: 'รอกรอกข้อมูล'},
+        {text: 'รอกรอกข้อมูล'},
+        {text: 'รอกรอกข้อมูล'}
+      ]
+    }
+  ];
 
   /* ============ SEED DATA ============ */
   const now = Date.now();
@@ -632,12 +716,15 @@ const recipesCol = collection(db, "recipes");
     undoTimeout:null,
     editing:null, 
     isNew:false,
+    selectMode: false,
+    selectedIds: new Set()
   };
 
   const catMeta = {
     'ชาใส':{cls:'cat-clear', icon:'🍵'},
     'ชานม':{cls:'cat-milk', icon:'🧋'},
     'ท็อปปิ้ง':{cls:'cat-topping', icon:'🍮'},
+    'พื้นฐาน':{cls:'cat-sys', icon:'🍬'},
   };
 
   /* ============ UTIL ============ */
@@ -670,7 +757,8 @@ const recipesCol = collection(db, "recipes");
 
   /* ============ FIRESTORE SYNC ============ */
   function recomputeRecipes(){
-    recipes = lastRawDocs.filter(r=>!pendingDeleteIds.has(r.id));
+    const fbDocs = lastRawDocs.filter(r=>!pendingDeleteIds.has(r.id));
+    recipes = [...SYSTEM_RECIPES, ...fbDocs];
   }
 
   function onDataChanged(){
@@ -702,8 +790,6 @@ const recipesCol = collection(db, "recipes");
   }
 
   function attachRealtimeSync(){
-    // แก้ไข Over-fetching โดยลิมิตไว้ที่ 100 รายการล่าสุด
-    // จะช่วยเซฟโควตาและทำให้ระบบโหลดลื่นขึ้นมากๆ
     const q = query(recipesCol, orderBy('updatedAt', 'desc'), limit(100));
     onSnapshot(q, (snap)=>{
       lastRawDocs = snap.docs.map(d=>({id:d.id, ...d.data()}));
@@ -738,44 +824,51 @@ const recipesCol = collection(db, "recipes");
 
   function cardHtml(r, wide){
     const meta = catMeta[r.category] || catMeta['ชานม'];
-    const isNewBadge = (Date.now() - r.updatedAt) < 2*86400000;
+    const isNewBadge = !r.isSystem && (Date.now() - r.updatedAt) < 2*86400000;
+    const isSelected = state.selectedIds.has(r.id);
+    
     return `
-    <div class="recipe-card glass ${wide?'card-wide':''}" data-id="${r.id}">
+    <div class="recipe-card glass ${wide?'card-wide':''} ${isSelected?'selected':''}" data-id="${r.id}">
       <div class="card-top-row">
-        <div class="card-icon ${meta.cls}">${r.icon || meta.icon}</div>
-        <button class="btn-pop-toggle ${r.popular?'active':''}" data-pop-id="${r.id}" title="เปิด/ปิดเมนูขายดี">🔥</button>
+        <div class="card-icon ${r.isSystem?'cat-sys':meta.cls}">${r.icon || meta.icon}</div>
+        ${state.selectMode 
+          ? (r.isSystem ? '<span class="badge-sys">⚡ พื้นฐาน</span>' : `<div class="select-chk ${isSelected?'checked':''}"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4 10-10" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></div>`)
+          : (r.isSystem ? '<span class="badge-sys">⚡ พื้นฐาน</span>' : `<button class="btn-pop-toggle ${r.popular?'active':''}" data-pop-id="${r.id}" title="เปิด/ปิดเมนูขายดี">🔥</button>`)
+        }
       </div>
-      ${isNewBadge?'<span class="badge-new" style="top:12px; right:12px;">ใหม่</span>':''}
+      ${isNewBadge?'<span class="badge-new" style="top:12px; right:52px;">ใหม่</span>':''}
       <div class="card-name">${escapeHtml(r.name)}</div>
-      <div class="card-tag">${r.category} · ${timeAgo(r.updatedAt)}</div>
+      <div class="card-tag">${r.category} · ${r.isSystem?'ควรรู้ทันที':timeAgo(r.updatedAt)}</div>
     </div>`;
   }
 
   function rowHtml(r){
     const meta = catMeta[r.category] || catMeta['ชานม'];
+    const isSelected = state.selectedIds.has(r.id);
+
     return `
-    <div class="list-row glass" data-id="${r.id}">
-      <div class="card-icon ${meta.cls}">${r.icon || meta.icon}</div>
+    <div class="list-row glass ${isSelected?'selected':''}" data-id="${r.id}">
+      <div class="card-icon ${r.isSystem?'cat-sys':meta.cls}">${r.icon || meta.icon}</div>
       <div class="rowmain">
-        <div class="card-name">${escapeHtml(r.name)}</div>
+        <div class="card-name" ${r.isSystem?'style="color:var(--berry);"':''}>${escapeHtml(r.name)}</div>
         <div class="card-tag">${r.category}</div>
       </div>
-      <div class="rowmeta">${timeAgo(r.updatedAt)}</div>
-      <button class="btn-pop-toggle ${r.popular?'active':''}" data-pop-id="${r.id}" title="เปิด/ปิดเมนูขายดี">🔥</button>
+      <div class="rowmeta">${r.isSystem ? '<span class="badge-sys">⚡ พื้นฐาน</span>' : timeAgo(r.updatedAt)}</div>
+      ${state.selectMode 
+        ? (r.isSystem ? '' : `<div class="select-chk ${isSelected?'checked':''}"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4 10-10" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></div>`)
+        : (r.isSystem ? '' : `<button class="btn-pop-toggle ${r.popular?'active':''}" data-pop-id="${r.id}" title="เปิด/ปิดเมนูขายดี">🔥</button>`)
+      }
     </div>`;
   }
 
-  // ฟังก์ชั่นเปิดปิดสถานะขายดี (Quick Popular Toggle)
   async function togglePopular(e) {
-    e.stopPropagation(); // ไม่ให้คลิกแล้วทะลุไปเปิดหน้าสูตร
+    e.stopPropagation();
     const btn = e.currentTarget;
     const id = btn.getAttribute('data-pop-id');
     const recipe = recipes.find(x => x.id === id);
-    if(!recipe) return;
+    if(!recipe || recipe.isSystem) return;
 
     const newState = !recipe.popular;
-    
-    // อัปเดต UI ทันที (Optimistic update)
     recipe.popular = newState;
     btn.classList.toggle('active', newState);
     
@@ -783,7 +876,6 @@ const recipesCol = collection(db, "recipes");
       await updateDoc(doc(db, 'recipes', id), { popular: newState });
       toast(newState ? 'เพิ่มเป็นเมนูขายดีแล้ว' : 'นำออกจากเมนูขายดีแล้ว');
     } catch(err) {
-      // คืนค่าถ้าเซฟไม่สำเร็จ
       recipe.popular = !newState;
       btn.classList.toggle('active', !newState);
       toast('อัปเดตไม่สำเร็จ ตรวจสอบอินเทอร์เน็ต', true);
@@ -791,26 +883,50 @@ const recipesCol = collection(db, "recipes");
   }
 
   function attachCardHandlers(container){
-    // กดที่การ์ดเพื่อดูสูตร
     container.querySelectorAll('[data-id]').forEach(el=>{
-      el.addEventListener('click', ()=> openDetail(el.getAttribute('data-id')));
+      el.addEventListener('click', ()=>{
+        const id = el.getAttribute('data-id');
+        const recipe = recipes.find(r => r.id === id);
+        
+        if(state.selectMode) {
+          if(!recipe || recipe.isSystem) {
+            toast('ข้อมูลพื้นฐานของระบบ ไม่สามารถลบได้', true);
+            return;
+          }
+          if(state.selectedIds.has(id)) {
+            state.selectedIds.delete(id);
+          } else {
+            state.selectedIds.add(id);
+          }
+          renderDashboard();
+          updateBatchBar();
+          return;
+        }
+
+        openDetail(id);
+      });
     });
-    // กดที่ปุ่มไฟเพื่อเปิดปิดสถานะขายดี
-    container.querySelectorAll('[data-pop-id]').forEach(btn=>{
-      btn.addEventListener('click', togglePopular);
-    });
+
+    if(!state.selectMode){
+      container.querySelectorAll('[data-pop-id]').forEach(btn=>{
+        btn.addEventListener('click', togglePopular);
+      });
+    }
   }
 
   function renderDashboard(skeleton){
+    const systemRow = document.getElementById('systemList');
     const popularRow = document.getElementById('popularRow');
     const recentList = document.getElementById('recentList');
     const allList = document.getElementById('allList');
     const allTitle = document.getElementById('allBlockTitle');
     const allCount = document.getElementById('allBlockCount');
+    const systemBlock = document.getElementById('systemBlock');
     const popularBlock = document.getElementById('popularBlock');
     const recentBlock = document.getElementById('recentBlock');
 
     if(skeleton){
+      if(systemRow) systemRow.innerHTML = Array(2).fill('<div class="skel skel-row"></div>').join('');
       popularRow.innerHTML = Array(3).fill('<div class="skel skel-card"></div>').join('');
       recentList.innerHTML = Array(3).fill('<div class="skel skel-row"></div>').join('');
       allList.innerHTML = Array(4).fill('<div class="skel skel-row"></div>').join('');
@@ -818,33 +934,123 @@ const recipesCol = collection(db, "recipes");
     }
 
     const filtered = recipes.filter(matchesFilter);
-    const searching = state.activeCat!=='all' || state.search.trim();
+    const searching = state.activeCat!=='all' || state.search.trim() || state.selectMode;
 
+    // ถ้ามีการค้นหา ให้ซ่อนหมวดด้านบนเพื่อโชว์ผลการค้นหาแบบเต็มๆ ด้านล่าง
+    systemBlock.style.display = searching ? 'none' : '';
     popularBlock.style.display = searching ? 'none' : '';
     recentBlock.style.display = searching ? 'none' : '';
 
     if(!searching){
-      const popular = recipes.filter(r=>r.popular).slice(0,6);
+      // 1. โชว์ข้อมูลพื้นฐานบนสุด
+      const sys = recipes.filter(r=>r.isSystem);
+      systemRow.innerHTML = sys.length ? sys.map(rowHtml).join('') : '<div style="color:var(--ink-faint); font-size:13px; padding:10px;">ไม่มีข้อมูลพื้นฐาน</div>';
+      attachCardHandlers(systemRow);
+      if(document.getElementById('systemBlockCount')) {
+        document.getElementById('systemBlockCount').textContent = sys.length + ' รายการ';
+      }
+
+      // 2. โชว์เมนูขายดี
+      const popular = recipes.filter(r=>r.popular && !r.isSystem).slice(0,6);
       popularRow.innerHTML = popular.length ? popular.map(r=>cardHtml(r,true)).join('') : '<div style="color:var(--ink-faint); font-size:13px; padding:10px;">ยังไม่มีเมนูขายดี</div>';
       attachCardHandlers(popularRow);
 
-      const recent = [...recipes].sort((a,b)=>b.updatedAt-a.updatedAt).slice(0,3);
+      // 3. โชว์อัปเดตล่าสุด
+      const recent = [...recipes].filter(r=>!r.isSystem).sort((a,b)=>b.updatedAt-a.updatedAt).slice(0,3);
       recentList.innerHTML = recent.map(rowHtml).join('');
       attachCardHandlers(recentList);
     }
 
-    allTitle.textContent = searching ? 'ผลการค้นหา' : 'สูตรทั้งหมด';
-    allCount.textContent = filtered.length + ' สูตร';
+    allTitle.textContent = state.selectMode ? 'ติ๊กเลือกรายการที่ต้องการลบ' : (searching ? 'ผลการค้นหา / หมวดหมู่' : 'สูตรเมนูทั่วไปทั้งหมด');
+    
+    // เมื่ออยู่หน้าหลักปกติ ให้ซ่อนเมนูระบบออกจาก "สูตรเมนูทั่วไปทั้งหมด" ด้านล่าง จะได้ไม่ซ้ำซ้อนกับข้างบน
+    const displayList = searching ? filtered : filtered.filter(r => !r.isSystem);
+    allCount.textContent = displayList.length + ' สูตร';
 
-    if(filtered.length===0){
+    if(displayList.length===0){
       allList.innerHTML = `<div class="empty">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         <p>ไม่พบสูตรที่ตรงกับการค้นหา</p>
       </div>`;
     } else {
-      allList.innerHTML = filtered.sort((a,b)=>b.updatedAt-a.updatedAt).map(rowHtml).join('');
+      const sorted = displayList.sort((a,b)=>{
+        if(a.isSystem && !b.isSystem) return -1;
+        if(!a.isSystem && b.isSystem) return 1;
+        return b.updatedAt-a.updatedAt;
+      });
+      allList.innerHTML = sorted.map(rowHtml).join('');
       attachCardHandlers(allList);
     }
+  }
+
+  /* ============ MULTI-SELECT & BATCH DELETE ============ */
+  function toggleSelectMode(){
+    state.selectMode = !state.selectMode;
+    state.selectedIds.clear();
+    const btn = document.getElementById('toggleSelectBtn');
+    if(state.selectMode){
+      btn.classList.add('active');
+      btn.textContent = '❌ ยกเลิกโหมดลบ';
+      btn.style.background = 'var(--berry)';
+      btn.style.color = '#fff';
+      document.getElementById('addRecipeBtn').classList.add('hidden');
+    } else {
+      btn.classList.remove('active');
+      btn.textContent = '🗑️ ลบหลายรายการ';
+      btn.style.background = '';
+      btn.style.color = 'var(--berry)';
+      document.getElementById('addRecipeBtn').classList.remove('hidden');
+    }
+    renderDashboard();
+    updateBatchBar();
+  }
+
+  function updateBatchBar(){
+    const root = document.getElementById('batch-root');
+    if(!state.selectMode || state.selectedIds.size === 0){
+      root.innerHTML = '';
+      return;
+    }
+    
+    if(root.innerHTML === ''){
+      const bar = document.createElement('div');
+      bar.className = 'undobar';
+      bar.innerHTML = `
+        <span id="batchCountText">เลือก ${state.selectedIds.size} รายการ</span>
+        <button id="execBatchDelete" class="btn-danger">ลบที่เลือก</button>
+      `;
+      root.appendChild(bar);
+      bar.querySelector('#execBatchDelete').addEventListener('click', executeBatchDelete);
+    } else {
+      const text = document.getElementById('batchCountText');
+      if(text) text.textContent = `เลือก ${state.selectedIds.size} รายการ`;
+    }
+  }
+
+  async function executeBatchDelete(){
+    if(state.selectedIds.size === 0) return;
+    const count = state.selectedIds.size;
+    if(!confirm(`คุณต้องการลบสูตรที่เลือกทั้ง ${count} รายการหรือไม่? (ไม่สามารถกู้คืนได้)`)) return;
+
+    const idsToDelete = Array.from(state.selectedIds);
+    toggleSelectMode();
+    
+    idsToDelete.forEach(id => pendingDeleteIds.add(id));
+    recomputeRecipes();
+    renderDashboard();
+
+    let success = 0;
+    for(const id of idsToDelete){
+      try{
+        await deleteDoc(doc(db, 'recipes', id));
+        success++;
+      }catch(err){
+        pendingDeleteIds.delete(id);
+      }
+    }
+    recomputeRecipes();
+    renderDashboard();
+    toast(`ลบเสร็จสิ้นแล้วจำนวน ${success} รายการ`);
   }
 
   /* ============ DETAIL VIEW ============ */
@@ -863,7 +1069,10 @@ const recipesCol = collection(db, "recipes");
     if(!r) return;
     document.getElementById('detailName').textContent = r.name;
     document.getElementById('detailCat').textContent = r.category;
-    document.getElementById('detailUpdated').textContent = timeAgo(r.updatedAt);
+    document.getElementById('detailUpdated').textContent = r.isSystem ? '⚡ ข้อมูลพื้นฐานระบบ' : timeAgo(r.updatedAt);
+
+    document.getElementById('editBtn').style.display = r.isSystem ? 'none' : 'flex';
+    document.getElementById('deleteBtn').style.display = r.isSystem ? 'none' : 'flex';
 
     document.querySelectorAll('#sizeSwitch button').forEach(b=>{
       b.classList.toggle('active', Number(b.getAttribute('data-size'))===state.cupSize);
@@ -938,7 +1147,6 @@ const recipesCol = collection(db, "recipes");
     }
     requestAnimationFrame(tick);
 
-    // หากกดกู้คืน ให้สร้างข้อมูลกลับไปที่ Firestore ด้วย ID เดิม
     bar.querySelector('#undoAction').onclick = async ()=>{
       cancelled = true;
       dismissUndo();
@@ -953,7 +1161,6 @@ const recipesCol = collection(db, "recipes");
     state.undoTimeout = setTimeout(()=>{
       cancelled = true;
       dismissUndo();
-      // ไม่ต้องลบอะไรตรงนี้แล้ว เพราะข้อมูลโดนลบไปตั้งแต่กดยืนยันแล้ว
     }, dur);
   }
   
@@ -996,6 +1203,10 @@ const recipesCol = collection(db, "recipes");
         steps:[{text:''}]
       };
     } else {
+      if(recipe && recipe.isSystem) {
+        toast('ข้อมูลพื้นฐานระบบ ไม่สามารถแก้ไขได้', true);
+        return;
+      }
       state.editing = JSON.parse(JSON.stringify(recipe));
     }
     document.getElementById('editTitle').textContent = isNew ? 'สูตรใหม่' : 'แก้ไขสูตร';
@@ -1079,7 +1290,7 @@ const recipesCol = collection(db, "recipes");
 
       const savedDoc = { id, ...data };
       const idx = lastRawDocs.findIndex(x=>x.id===id);
-      if(idx>=0){ lastRawDocs[idx] = savedDoc; } else { lastRawDocs.unshift(savedDoc); } // เอาสูตรใหม่ดันขึ้นบนสุด
+      if(idx>=0){ lastRawDocs[idx] = savedDoc; } else { lastRawDocs.unshift(savedDoc); }
       recomputeRecipes();
 
       toast(state.isNew ? `บันทึกสูตร "${e.name}" แล้ว` : `อัปเดตสูตร "${e.name}" แล้ว`);
@@ -1087,7 +1298,7 @@ const recipesCol = collection(db, "recipes");
       return true;
     }catch(err){
       console.error('save error', err);
-      toast('บันริกไม่สำเร็จ ตรวจสอบการเชื่อมต่อ', true);
+      toast('บันทึกไม่สำเร็จ ตรวจสอบการเชื่อมต่อ', true);
       return false;
     }
   }
@@ -1109,7 +1320,6 @@ const recipesCol = collection(db, "recipes");
     renderDashboard();
   });
 
-  // ล้างการค้นหาด้วยปุ่มคลิกเดียว
   clearSearchBtn.addEventListener('click', ()=>{
     searchInput.value = '';
     state.search = '';
@@ -1119,9 +1329,13 @@ const recipesCol = collection(db, "recipes");
   });
 
   document.getElementById('chipRow').addEventListener('click', e=>{
+    if(e.target.id === 'toggleSelectBtn') {
+      toggleSelectMode();
+      return;
+    }
     const chip = e.target.closest('.chip');
-    if(!chip) return;
-    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    if(!chip || chip.id === 'toggleSelectBtn') return;
+    document.querySelectorAll('.chip:not(#toggleSelectBtn)').forEach(c=>c.classList.remove('active'));
     chip.classList.add('active');
     state.activeCat = chip.getAttribute('data-cat');
     renderDashboard();
@@ -1169,23 +1383,20 @@ const recipesCol = collection(db, "recipes");
 
   document.getElementById('deleteBtn').addEventListener('click', async ()=>{
     const r = recipes.find(x=>x.id===state.currentId);
-    if(!r) return;
+    if(!r || r.isSystem) return;
     
-    // สำรองข้อมูลที่จะถูกลบ
     const deletedData = JSON.parse(JSON.stringify(r));
-    
-    // กลับไปหน้าแดชบอร์ดและลบข้อมูลออกจากหน้าจอทันทีเพื่อ UX ที่ลื่นไหล
     showView('dashboard');
-    recipes = recipes.filter(x=>x.id!==r.id);
+    pendingDeleteIds.add(r.id);
+    recomputeRecipes();
     renderDashboard();
     
     try {
-      // ส่งคำสั่งลบไปยังฐานข้อมูล "ทันที" 
       await deleteDoc(doc(db, 'recipes', r.id));
       showUndo(deletedData); 
     } catch(err) {
-      // ถ้ายกเลิกไม่สำเร็จ นำข้อมูลกลับคืนมา
       toast('ลบไม่สำเร็จ กรุณาลองใหม่', true);
+      pendingDeleteIds.delete(r.id);
       recomputeRecipes();
       renderDashboard();
     }
